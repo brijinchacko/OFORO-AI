@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /auth
+Disallow: /settings
+Disallow: /chat
+
+Sitemap: https://oforo.ai/sitemap.xml
