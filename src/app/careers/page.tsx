@@ -1,5 +1,6 @@
 'use client';
 
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft, MapPin, ExternalLink } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
@@ -36,6 +37,12 @@ const positions = [
     type: 'Full-time',
   },
 ];
+
+export const metadata: Metadata = {
+  title: "Careers at Oforo AI — Join Our Team",
+  description: "Explore job opportunities at Oforo AI. We're hiring AI engineers, developers, designers, and data scientists in Milton Keynes, UK and Bangalore, India.",
+  keywords: ["AI jobs UK", "AI careers", "Oforo careers", "AI jobs Bangalore"],
+};
 
 export default function CareersPage() {
   useTheme();

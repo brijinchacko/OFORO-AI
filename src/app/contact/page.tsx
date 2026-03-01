@@ -1,11 +1,18 @@
 'use client';
 
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft, Mail, MapPin, Phone } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
 import { useState } from 'react';
 
 const year = new Date().getFullYear();
+
+export const metadata: Metadata = {
+  title: "Contact Oforo AI",
+  description: "Get in touch with Oforo AI. Contact us for support, partnerships, or any inquiries about our AI platform.",
+  keywords: ["contact Oforo", "AI company contact", "Oforo support"],
+};
 
 export default function ContactPage() {
   useTheme();

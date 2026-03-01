@@ -1,5 +1,6 @@
 "use client";
 
+import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -15,6 +16,12 @@ import {
   Briefcase,
   BarChart3,
 } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "NXTED — AI Career Development Agent",
+  description: "NXTED is a specialized AI agent for career development. Personalized learning paths, skill assessment, and employer matching for job seekers.",
+  keywords: ["NXTED AI", "career development AI", "AI for job seekers", "AI career agent"],
+};
 
 export default function NxtedPage() {
   const features = [

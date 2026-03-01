@@ -1,5 +1,6 @@
 "use client";
 
+import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -15,6 +16,12 @@ import {
   Filter,
   BookOpen,
 } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "SEEKOF — AI Discovery & Search Agent",
+  description: "SEEKOF is a specialized AI agent for discovering, comparing, and analyzing AI tools. Search 50,000+ AI platforms and companies.",
+  keywords: ["SEEKOF AI", "AI search agent", "AI discovery platform"],
+};
 
 export default function SeekofPage() {
   const features = [

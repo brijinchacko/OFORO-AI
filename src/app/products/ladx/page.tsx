@@ -1,5 +1,6 @@
 "use client";
 
+import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -15,6 +16,12 @@ import {
   Gauge,
   RefreshCw,
 } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "LADX — AI Agent for Industrial Automation",
+  description: "LADX AI is a specialized agent for PLC programming and industrial automation. Generate production-ready code for Siemens, Allen-Bradley, and more.",
+  keywords: ["LADX AI", "PLC programming AI", "industrial automation AI", "AI for manufacturing"],
+};
 
 export default function LadxPage() {
   const features = [

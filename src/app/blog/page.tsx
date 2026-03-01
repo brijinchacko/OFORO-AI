@@ -1,5 +1,6 @@
 'use client';
 
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft, Calendar, ArrowRight } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
@@ -36,6 +37,12 @@ const blogPosts = [
     slug: 'nlp-trends-2026',
   },
 ];
+
+export const metadata: Metadata = {
+  title: "Blog — AI Insights & Updates",
+  description: "Read the latest insights on artificial intelligence, AI trends, LLMs, enterprise AI, and AI development from Oforo AI.",
+  keywords: ["AI blog", "artificial intelligence news", "AI updates"],
+};
 
 export default function BlogPage() {
   useTheme();

@@ -1,7 +1,13 @@
 "use client";
 
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Privacy Policy",
+  description: "Oforo AI privacy policy. Learn how we collect, use, and protect your personal data.",
+};
 
 export default function PrivacyPage() {
   const sections = [
