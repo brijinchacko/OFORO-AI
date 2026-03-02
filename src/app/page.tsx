@@ -569,7 +569,7 @@ function Sidebar({
   isOpen, onClose, collapsed, onToggleCollapse,
   user, authLoading, onLogout, onSignIn,
   onRenameConvo, onDeleteConvo, onTogglePinConvo,
-  voiceThreads, onSelectVoiceThread, onDeleteVoiceThread,
+  voiceThreads, onSelectVoiceThread, onDeleteVoiceThread, onRenameVoiceThread, onTogglePinVoiceThread,
   isMax, sidebarTab, onTabChange,
   friends, onOpenFriends, onMessageFriend, onOpenWorkspaces, onOpenMessages,
 }: {
