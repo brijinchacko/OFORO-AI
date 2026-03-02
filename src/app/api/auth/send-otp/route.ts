@@ -24,9 +24,7 @@ export async function POST(req: NextRequest) {
     if (type === "login") {
       const existing = getUserByEmail(normalizedEmail);
       if (!existing) {
-        // Don't reveal that the user doesn't exist — just say OTP sent
-        // But still generate and "send" to prevent timing attacks
-        return NextResponse.json({ success: true, message: "If this email is registered, you will receive a code." });
+        return NextResponse.json({ error: "No account found with this email. Please sign up first." }, { status: 404 });
       }
     }
 

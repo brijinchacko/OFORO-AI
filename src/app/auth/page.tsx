@@ -64,7 +64,13 @@ export default function AuthPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Failed to send code");
+        if (res.status === 404 && mode === "signin") {
+          setError("No account found with this email. Please sign up first.");
+        } else if (res.status === 409 && mode === "signup") {
+          setError("An account with this email already exists. Please sign in instead.");
+        } else {
+          setError(data.error || "Failed to send code");
+        }
         setLoading(false);
         return;
       }
