@@ -28,7 +28,7 @@ async function getDMEncryptionKey(): Promise<CryptoKey> {
   }
   const key = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
   const exported = await crypto.subtle.exportKey('raw', key);
-  localStorage.setItem(ENCRYPTION_KEY_NAME, btoa(String.fromCharCode(...new Uint8Array(exported))));
+  localStorage.setItem(ENCRYPTION_KEY_NAME, btoa(String.fromCharCode.apply(null, Array.from(new Uint8Array(exported)))));
   return key;
 }
 
@@ -41,7 +41,7 @@ async function encryptMessage(text: string): Promise<string> {
     const combined = new Uint8Array(iv.length + new Uint8Array(encrypted).length);
     combined.set(iv, 0);
     combined.set(new Uint8Array(encrypted), iv.length);
-    return 'ENC:' + btoa(String.fromCharCode(...combined));
+    return 'ENC:' + btoa(String.fromCharCode.apply(null, Array.from(combined)));
   } catch {
     return text; // Fallback: store unencrypted if crypto fails
   }
