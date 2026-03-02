@@ -2106,6 +2106,7 @@ export default function Home() {
         isOpen={directMessagesOpen}
         onClose={() => { setDirectMessagesOpen(false); setDmActiveFriend(null); }}
         activeFriend={dmActiveFriend}
+        friends={friends}
         currentUser={{
           id: user?.id || "self",
           name: user?.name || "You",
