@@ -14,7 +14,7 @@ import { NextRequest, NextResponse } from "next/server";
 const CLIENT_ID = process.env.MICROSOFT_CLIENT_ID || "";
 const CLIENT_SECRET = process.env.MICROSOFT_CLIENT_SECRET || "";
 const REDIRECT_URI = `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/api/todo/microsoft/callback`;
-const SCOPES = "Tasks.ReadWrite offline_access";
+const SCOPES = "Tasks.ReadWrite Mail.Send Mail.ReadWrite Calendars.ReadWrite offline_access";
 
 export async function POST(req: NextRequest) {
   try {
@@ -187,9 +187,130 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ todos: tasks });
     }
 
+    // ── Send email via Outlook ──
+    if (action === "send-email") {
+      if (!accessToken || !body.to || !body.subject || !body.content) {
+        return NextResponse.json({ error: "accessToken, to, subject, and content required" }, { status: 400 });
+      }
+
+      const emailRes = await fetch("https://graph.microsoft.com/v1.0/me/sendMail", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: {
+            subject: body.subject,
+            body: { contentType: "HTML", content: body.content },
+            toRecipients: Array.isArray(body.to)
+              ? body.to.map((email: string) => ({ emailAddress: { address: email } }))
+              : [{ emailAddress: { address: body.to } }],
+          },
+        }),
+      });
+
+      if (!emailRes.ok) {
+        const err = await emailRes.text();
+        console.error("Outlook send error:", err);
+        return NextResponse.json({ error: "Failed to send email" }, { status: 400 });
+      }
+
+      return NextResponse.json({ success: true, message: "Email sent via Outlook" });
+    }
+
+    // ── Fetch Outlook inbox ──
+    if (action === "fetch-emails") {
+      if (!accessToken) return NextResponse.json({ error: "accessToken required" }, { status: 400 });
+
+      const mailRes = await fetch(
+        "https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages?$top=20&$orderby=receivedDateTime desc&$select=id,subject,from,receivedDateTime,isRead,bodyPreview",
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      if (!mailRes.ok) return NextResponse.json({ error: "Failed to fetch emails" }, { status: 400 });
+
+      const mailData = await mailRes.json();
+      return NextResponse.json({
+        emails: mailData.value?.map((m: { id: string; subject: string; from: { emailAddress: { name: string; address: string } }; receivedDateTime: string; isRead: boolean; bodyPreview: string }) => ({
+          id: m.id,
+          subject: m.subject,
+          from: m.from?.emailAddress,
+          receivedAt: m.receivedDateTime,
+          isRead: m.isRead,
+          preview: m.bodyPreview,
+        })) || [],
+      });
+    }
+
+    // ── Fetch calendar events (Teams & Outlook calendar) ──
+    if (action === "fetch-calendar") {
+      if (!accessToken) return NextResponse.json({ error: "accessToken required" }, { status: 400 });
+
+      const now = new Date().toISOString();
+      const weekLater = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+      const calRes = await fetch(
+        `https://graph.microsoft.com/v1.0/me/calendarView?startDateTime=${now}&endDateTime=${weekLater}&$top=50&$orderby=start/dateTime&$select=id,subject,start,end,location,isOnlineMeeting,onlineMeeting,organizer`,
+        { headers: { Authorization: `Bearer ${accessToken}`, Prefer: 'outlook.timezone="UTC"' } }
+      );
+      if (!calRes.ok) return NextResponse.json({ error: "Failed to fetch calendar" }, { status: 400 });
+
+      const calData = await calRes.json();
+      return NextResponse.json({
+        events: calData.value?.map((e: { id: string; subject: string; start: { dateTime: string }; end: { dateTime: string }; location: { displayName: string }; isOnlineMeeting: boolean; onlineMeeting: { joinUrl: string } | null; organizer: { emailAddress: { name: string } } }) => ({
+          id: e.id,
+          subject: e.subject,
+          start: e.start?.dateTime,
+          end: e.end?.dateTime,
+          location: e.location?.displayName,
+          isOnlineMeeting: e.isOnlineMeeting,
+          joinUrl: e.onlineMeeting?.joinUrl,
+          organizer: e.organizer?.emailAddress?.name,
+        })) || [],
+      });
+    }
+
+    // ── Create calendar event ──
+    if (action === "create-event") {
+      if (!accessToken || !body.subject || !body.start || !body.end) {
+        return NextResponse.json({ error: "accessToken, subject, start, end required" }, { status: 400 });
+      }
+
+      const eventBody: Record<string, unknown> = {
+        subject: body.subject,
+        start: { dateTime: body.start, timeZone: "UTC" },
+        end: { dateTime: body.end, timeZone: "UTC" },
+        isOnlineMeeting: body.isTeamsMeeting || false,
+        onlineMeetingProvider: body.isTeamsMeeting ? "teamsForBusiness" : undefined,
+      };
+
+      if (body.location) eventBody.location = { displayName: body.location };
+      if (body.attendees) {
+        eventBody.attendees = body.attendees.map((a: string) => ({
+          emailAddress: { address: a },
+          type: "required",
+        }));
+      }
+
+      const eventRes = await fetch("https://graph.microsoft.com/v1.0/me/events", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify(eventBody),
+      });
+
+      if (!eventRes.ok) {
+        const err = await eventRes.text();
+        console.error("Calendar event error:", err);
+        return NextResponse.json({ error: "Failed to create event" }, { status: 400 });
+      }
+
+      const eventData = await eventRes.json();
+      return NextResponse.json({ success: true, event: { id: eventData.id, subject: eventData.subject, joinUrl: eventData.onlineMeeting?.joinUrl } });
+    }
+
     return NextResponse.json({ error: "Unknown action" }, { status: 400 });
   } catch (err) {
-    console.error("Microsoft Todo API error:", err);
+    console.error("Microsoft API error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

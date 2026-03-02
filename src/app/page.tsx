@@ -210,11 +210,13 @@ function ModelSelector({ selected, onSelect, onProductSelected }: {
   return (
     <div ref={ref} className="relative">
       <button onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors"
+        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-colors"
         style={{ border: "1px solid var(--border-primary)" }}>
-        <span className={currentModel.color}>{currentModel.icon}</span>
         <span className="font-medium">{currentModel.name}</span>
-        <ChevronDown className={`w-3.5 h-3.5 transition-transform ${open ? "rotate-180" : ""}`} style={{ color: "var(--text-tertiary)" }} />
+        {currentModel.badge && (
+          <span className="px-1 py-0.5 text-[9px] font-bold rounded" style={{ background: "var(--bg-hover)", color: "var(--text-tertiary)" }}>{currentModel.badge}</span>
+        )}
+        <ChevronDown className={`w-3 h-3 transition-transform ${open ? "rotate-180" : ""}`} style={{ color: "var(--text-tertiary)" }} />
       </button>
       {open && (
         <div className="absolute top-full left-0 mt-2 w-80 rounded-xl shadow-2xl overflow-hidden z-50 animate-fade-in"
@@ -228,7 +230,6 @@ function ModelSelector({ selected, onSelect, onProductSelected }: {
                 <button key={model.id}
                   onClick={() => {
                     if (locked) {
-                      const planNames: Record<string, string> = { free: "General", pro: "Pro", max: "MAX" };
                       triggerUpgradePrompt(model.name, reqPlan);
                       setOpen(false);
                       return;
@@ -236,25 +237,24 @@ function ModelSelector({ selected, onSelect, onProductSelected }: {
                     onSelect(model.id); setOpen(false);
                     if (model.productUrl) onProductSelected(model);
                   }}
-                  className="w-full flex items-start gap-3 p-3 rounded-lg transition-colors"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors"
                   style={{ background: selected === model.id ? "var(--bg-hover)" : "transparent", opacity: locked ? 0.6 : 1 }}>
-                  <div className={`mt-0.5 ${model.color}`}>{model.icon}</div>
                   <div className="flex-1 text-left">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium">{model.name}</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-medium">{model.name}</span>
                       {model.badge && (
-                        <span className="px-1.5 py-0.5 text-[10px] font-medium rounded" style={{ background: "var(--bg-hover)", color: "var(--text-secondary)" }}>{model.badge}</span>
+                        <span className="px-1 py-0.5 text-[9px] font-medium rounded" style={{ background: "var(--bg-hover)", color: "var(--text-secondary)" }}>{model.badge}</span>
                       )}
                       {model.productUrl && (
-                        <span className="px-1.5 py-0.5 text-[10px] font-medium rounded text-blue-400" style={{ background: "rgba(59,130,246,0.1)" }}>Product</span>
+                        <span className="px-1 py-0.5 text-[9px] font-medium rounded text-blue-400" style={{ background: "rgba(59,130,246,0.1)" }}>Product</span>
                       )}
                       {locked && (
                         <Lock className="w-3 h-3" style={{ color: reqPlan === "max" ? "#f59e0b" : "#a855f7" }} />
                       )}
                     </div>
-                    <p className="text-xs mt-0.5" style={{ color: "var(--text-tertiary)" }}>{model.description}</p>
+                    <p className="text-[11px] mt-0.5" style={{ color: "var(--text-tertiary)" }}>{model.description}</p>
                   </div>
-                  {selected === model.id && !locked && <Check className="w-4 h-4 text-blue-500 mt-0.5" />}
+                  {selected === model.id && !locked && <Check className="w-3.5 h-3.5 text-blue-500" />}
                 </button>
               );
             })}
@@ -614,7 +614,9 @@ function Sidebar({
     return (
       <aside className="hidden lg:flex flex-col items-center py-3 w-16 flex-shrink-0 h-full"
         style={{ background: "var(--bg-secondary)", borderRight: "1px solid var(--border-primary)" }}>
-        <OforoIcon size={28} className="mb-2" />
+        <Link href="/" className="mb-2 p-1 rounded-lg transition-colors hover:bg-opacity-50" style={{ color: "var(--text-secondary)" }}>
+          <OforoIcon size={28} />
+        </Link>
         {/* Collapse toggle — directly below logo */}
         <button onClick={onToggleCollapse} className="p-2 rounded-lg mb-2 transition-colors" style={{ color: "var(--text-tertiary)" }} title="Expand sidebar">
           <ChevronRight className="w-5 h-5" />
@@ -645,7 +647,9 @@ function Sidebar({
         style={{ background: "var(--bg-secondary)", borderRight: "1px solid var(--border-primary)" }}>
         {/* Header with logo + collapse on right edge */}
         <div className="flex items-center justify-between p-4" style={{ borderBottom: "1px solid var(--border-primary)" }}>
-          <OforoLogo />
+          <Link href="/" className="transition-colors hover:opacity-75">
+            <OforoLogo />
+          </Link>
           <div className="flex items-center gap-1">
             <button onClick={onToggleCollapse} className="hidden lg:block p-1.5 rounded-lg transition-colors" style={{ color: "var(--text-tertiary)" }} title="Collapse sidebar">
               <ChevronLeft className="w-4 h-4" />
@@ -1658,27 +1662,10 @@ export default function Home() {
                         <Globe className="w-3.5 h-3.5" />
                         <span className="hidden sm:inline">Web</span>
                       </button>
-                      {focusModes.filter((m) => m.id !== "all").map((m) => (
-                        <button key={m.id} onClick={() => handleFocusChange(m.id)}
-                          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all"
-                          style={{
-                            background: activeFocus === m.id ? "var(--bg-hover)" : "transparent",
-                            color: activeFocus === m.id ? "var(--text-primary)" : "var(--text-tertiary)",
-                            border: activeFocus === m.id ? "1px solid var(--border-hover)" : "1px solid transparent",
-                          }}>
-                          {m.icon}<span className="hidden sm:inline">{m.label}</span>
-                        </button>
-                      ))}
                     </div>
                     <div className="flex items-center gap-1">
                       <input ref={fileInputRef} type="file" className="hidden" onChange={onFileChange}
                         accept=".txt,.csv,.json,.md,.pdf,.docx,.xlsx,.pptx,.png,.jpg,.jpeg,.gif,.webp" />
-                      {(!user || canAccessFeature("browse_files")) && (
-                        <button onClick={handleBrowseFiles} className="p-2 rounded-lg transition-colors" style={{ color: "var(--text-tertiary)" }}
-                          title="Browse local files">
-                          <Monitor className="w-4 h-4" />
-                        </button>
-                      )}
                       <button onClick={() => fileInputRef.current?.click()} className="p-2 rounded-lg transition-colors" style={{ color: "var(--text-tertiary)" }}
                         title="Upload a file">
                         <Paperclip className="w-4 h-4" />

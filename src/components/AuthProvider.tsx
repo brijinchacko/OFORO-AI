@@ -14,6 +14,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<{ error?: string }>;
   register: (email: string, password: string, name: string) => Promise<{ error?: string }>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -22,6 +23,7 @@ const AuthContext = createContext<AuthContextType>({
   login: async () => ({}),
   register: async () => ({}),
   logout: async () => {},
+  refreshUser: async () => {},
 });
 
 export function useAuth() {
@@ -32,16 +34,23 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const refreshUser = useCallback(async () => {
+    try {
+      const res = await fetch("/api/auth/me");
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.user) { setUser(data.user); return; }
+      }
+      setUser(null);
+    } catch {
+      setUser(null);
+    }
+  }, []);
+
   // Check session on mount
   useEffect(() => {
-    fetch("/api/auth/me")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data?.user) setUser(data.user);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+    refreshUser().finally(() => setLoading(false));
+  }, [refreshUser]);
 
   const login = useCallback(async (email: string, password: string) => {
     try {
@@ -81,7 +90,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );
