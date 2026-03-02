@@ -2,11 +2,32 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyToken, getUserByEmail } from "@/lib/auth";
 import { friendsOps, userOps } from "@/lib/db";
 
-function getUser(req: NextRequest) {
-  const token = req.cookies.get("oforo-token")?.value;
-  if (!token) return null;
-  // verifyToken is async but we need sync — use a workaround
-  return token;
+const BOT_ID = "oforo-ai-bot";
+const BOT_EMAIL = "bot@oforo.ai";
+const BOT_NAME = "Oforo AI";
+
+function ensureBotExists() {
+  const bot = userOps.getById(BOT_ID);
+  if (!bot) {
+    userOps.create({
+      id: BOT_ID,
+      email: BOT_EMAIL,
+      name: BOT_NAME,
+      password_hash: "",
+      created_at: new Date().toISOString(),
+      email_verified: 1,
+    });
+  }
+}
+
+function ensureBotFriend(userId: string) {
+  ensureBotExists();
+  const existing = friendsOps.getByIds(userId, BOT_ID);
+  const reverse = friendsOps.getByIds(BOT_ID, userId);
+  if (!existing && !reverse) {
+    const now = new Date().toISOString();
+    friendsOps.create({ user_id: userId, friend_id: BOT_ID, status: "accepted", created_at: now, updated_at: now });
+  }
 }
 
 async function getAuthUser(req: NextRequest) {
@@ -23,18 +44,25 @@ export async function GET(req: NextRequest) {
     const action = req.nextUrl.searchParams.get("action") || "list";
 
     if (action === "list") {
+      // Auto-add Oforo AI bot as friend for every user
+      ensureBotFriend(user.userId);
+
       // Get accepted friends
       const friendships = friendsOps.getAccepted(user.userId);
       const friends = friendships.map((f: { user_id: string; friend_id: string; created_at: string }) => {
         const friendId = f.user_id === user.userId ? f.friend_id : f.user_id;
         const friendUser = userOps.getById(friendId);
-        return friendUser ? {
+        if (!friendUser) return null;
+        const isBot = friendUser.id === BOT_ID;
+        return {
           id: friendUser.id,
           name: friendUser.name,
           email: friendUser.email,
-          avatar: friendUser.name?.charAt(0)?.toUpperCase() || "?",
+          avatar: isBot ? "O" : (friendUser.name?.charAt(0)?.toUpperCase() || "?"),
           addedAt: f.created_at,
-        } : null;
+          isBot,
+          bio: isBot ? "Your AI companion on Oforo — always here to help with questions, tasks, coding, research, and more." : undefined,
+        };
       }).filter(Boolean);
 
       return NextResponse.json({ friends });
@@ -78,6 +106,7 @@ export async function GET(req: NextRequest) {
       const allUsers = userOps.getAll();
       const results = allUsers.filter((u: { id: string; email: string; name: string }) =>
         u.id !== user.userId &&
+        u.id !== BOT_ID &&
         (u.email.includes(query.toLowerCase()) || u.name?.toLowerCase().includes(query.toLowerCase()))
       ).slice(0, 10).map((u: { id: string; name: string; email: string }) => ({
         id: u.id, name: u.name, email: u.email, avatar: u.name?.charAt(0)?.toUpperCase() || "?",
@@ -156,6 +185,7 @@ export async function POST(req: NextRequest) {
     // ── Remove friend ──
     if (action === "remove") {
       if (!friendId) return NextResponse.json({ error: "friendId required" }, { status: 400 });
+      if (friendId === BOT_ID) return NextResponse.json({ error: "Cannot remove Oforo AI bot" }, { status: 400 });
       friendsOps.delete(user.userId, friendId);
       friendsOps.delete(friendId, user.userId);
       return NextResponse.json({ success: true });

@@ -597,7 +597,20 @@ function Sidebar({
   const [profileOpen, setProfileOpen] = useState(false);
   const [productsSubOpen, setProductsSubOpen] = useState(false);
   const [contextMenuId, setContextMenuId] = useState<string | null>(null);
+  const [currentLanguage, setCurrentLanguage] = useState("English");
   const router = useRouter();
+
+  // Read language from localStorage
+  useEffect(() => {
+    const langMap: Record<string, string> = {
+      en: "English", es: "Spanish", fr: "French", de: "German", it: "Italian",
+      pt: "Portuguese", nl: "Dutch", ru: "Russian", zh: "Chinese", ja: "Japanese",
+      ko: "Korean", ar: "Arabic", hi: "Hindi", ml: "Malayalam", ta: "Tamil",
+      tr: "Turkish", pl: "Polish", sv: "Swedish", da: "Danish", no: "Norwegian",
+    };
+    const saved = localStorage.getItem("oforo-language");
+    if (saved && langMap[saved]) setCurrentLanguage(langMap[saved]);
+  }, [profileOpen]);
   const { plan: currentPlan } = usePlan();
 
   // Sort: pinned first, then by timestamp
@@ -868,7 +881,7 @@ function Sidebar({
                 onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-hover)")}
                 onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
                 <Languages className="w-4 h-4" style={{ color: "var(--text-tertiary)" }} /> Language
-                <span className="ml-auto text-xs" style={{ color: "var(--text-tertiary)" }}>English</span>
+                <span className="ml-auto text-xs" style={{ color: "var(--text-tertiary)" }}>{currentLanguage}</span>
               </button>
               <button onClick={() => router.push("/help")} className="w-full flex items-center gap-2.5 px-3 py-2 text-sm rounded-lg text-left transition-colors"
                 style={{ color: "var(--text-secondary)" }}
