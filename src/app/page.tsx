@@ -1077,6 +1077,7 @@ export default function Home() {
   ]);
   const [canvasOpen, setCanvasOpen] = useState(false);
   const [taskHubOpen, setTaskHubOpen] = useState(false);
+  const [taskToast, setTaskToast] = useState<string | null>(null);
   const [mermaidCode, setMermaidCode] = useState<string | undefined>(undefined);
   const [voiceChatOpen, setVoiceChatOpen] = useState(false);
   const [voiceMode, setVoiceMode] = useState(false);
@@ -1441,16 +1442,20 @@ export default function Home() {
         if (detectedTodos.length > 0) {
           const existingRaw = localStorage.getItem("oforo-todos");
           const existing = existingRaw ? JSON.parse(existingRaw) : [];
-          const newItems = detectedTodos.map((t) => ({
-            id: Date.now().toString() + Math.random().toString(36).slice(2, 6),
+          const newItems = detectedTodos.map((t, i) => ({
+            id: Date.now().toString() + i + Math.random().toString(36).slice(2, 6),
             text: t.text,
             completed: false,
             dueDate: t.dueDate,
+            dueTime: t.dueTime,
             priority: t.priority,
             category: "AI Suggested",
             createdAt: new Date().toISOString(),
           }));
           localStorage.setItem("oforo-todos", JSON.stringify([...newItems, ...existing]));
+          // Show toast notification
+          setTaskToast(`${detectedTodos.length} task${detectedTodos.length > 1 ? "s" : ""} added to Task Hub`);
+          setTimeout(() => setTaskToast(null), 4000);
         }
       }
 
@@ -1581,8 +1586,8 @@ export default function Home() {
                 </Link>
               </>
             )}
-            {/* Pro & MAX features: Task Hub */}
-            {(!user || canAccessFeature("taskhub")) && (
+            {/* Task Hub - available for all users */}
+            {(
               <button onClick={() => setTaskHubOpen(true)} className="p-2 rounded-lg transition-colors relative" style={{ color: "var(--text-tertiary)" }}
                 title="Tasks & Schedules">
                 <CheckSquare className="w-5 h-5" />
@@ -1955,6 +1960,19 @@ export default function Home() {
           </>
         )}
       </div>
+
+      {/* ═══ TASK TOAST NOTIFICATION ═══ */}
+      {taskToast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] animate-fade-in">
+          <button onClick={() => { setTaskToast(null); setTaskHubOpen(true); }}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl shadow-lg text-sm font-medium transition-all hover:scale-105"
+            style={{ background: "var(--accent-primary)", color: "white" }}>
+            <CheckSquare className="w-4 h-4" />
+            {taskToast}
+            <span className="text-xs opacity-75 ml-1">→ Open</span>
+          </button>
+        </div>
+      )}
 
       {/* ═══ CANVAS WHITEBOARD ═══ */}
       <CanvasWhiteboard

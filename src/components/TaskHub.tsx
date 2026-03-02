@@ -260,6 +260,20 @@ export default function TaskHub({ isOpen, onClose, onRunQuery }: TaskHubProps) {
     if (savedApple) setAppleId(savedApple);
   }, []);
 
+  // Re-sync todos from localStorage whenever the panel opens (catches tasks added from chat)
+  useEffect(() => {
+    if (isOpen) {
+      try {
+        const savedTodos = localStorage.getItem("oforo-todos");
+        if (savedTodos) setTodos(JSON.parse(savedTodos));
+      } catch { /* ignore */ }
+      try {
+        const savedQ = localStorage.getItem("oforo-scheduled-queries");
+        if (savedQ) setQueries(JSON.parse(savedQ));
+      } catch { /* ignore */ }
+    }
+  }, [isOpen]);
+
   useEffect(() => { localStorage.setItem("oforo-todos", JSON.stringify(todos)); }, [todos]);
   useEffect(() => { localStorage.setItem("oforo-scheduled-queries", JSON.stringify(queries)); }, [queries]);
 
@@ -831,21 +845,42 @@ export default function TaskHub({ isOpen, onClose, onRunQuery }: TaskHubProps) {
 }
 
 /* ═══════ EXPORTED: Parse todos from AI response ═══════ */
-export function parseTodosFromAIResponse(content: string): { text: string; dueDate?: string; priority: "low" | "medium" | "high" }[] {
-  const todos: { text: string; dueDate?: string; priority: "low" | "medium" | "high" }[] = [];
-  const patterns = [/[-*]\s*\[[\sx]?\]\s*(.+)/gi, /TODO:\s*(.+)/gi, /TASK:\s*(.+)/gi, /ACTION:\s*(.+)/gi];
+export function parseTodosFromAIResponse(content: string): { text: string; dueDate?: string; dueTime?: string; priority: "low" | "medium" | "high" }[] {
+  const todos: { text: string; dueDate?: string; dueTime?: string; priority: "low" | "medium" | "high" }[] = [];
+  const seen = new Set<string>();
+  const patterns = [
+    /[-*]\s*\[[\sx]?\]\s*(.+)/gi,           // - [ ] Task or - [x] Task
+    /[-*]\s*TODO:\s*(.+)/gi,                 // - TODO: Task
+    /^TODO:\s*(.+)/gim,                       // TODO: Task (start of line)
+    /[-*]\s*TASK:\s*(.+)/gi,                 // - TASK: Task
+    /^TASK:\s*(.+)/gim,                       // TASK: Task (start of line)
+    /[-*]\s*ACTION:\s*(.+)/gi,               // - ACTION: Task
+    /[-*]\s*REMINDER:\s*(.+)/gi,             // - REMINDER: Task
+    /[-*]\s*SCHEDULE:\s*(.+)/gi,             // - SCHEDULE: Task
+  ];
   for (const pattern of patterns) {
     let match;
     while ((match = pattern.exec(content)) !== null) {
-      const taskText = match[1].trim();
+      let taskText = match[1].trim();
+      // Clean up: remove trailing markdown bold/italic markers
+      taskText = taskText.replace(/\*+$/g, "").trim();
+      // Skip if already seen (dedup by lowercase text)
+      const key = taskText.toLowerCase();
+      if (seen.has(key)) continue;
       if (taskText.length > 2 && taskText.length < 200) {
         let priority: "low" | "medium" | "high" = "medium";
-        if (/urgent|critical|important|high/i.test(taskText)) priority = "high";
-        if (/low|minor|optional/i.test(taskText)) priority = "low";
+        if (/urgent|critical|important|high\s*priority/i.test(taskText)) priority = "high";
+        if (/low\s*priority|minor|optional/i.test(taskText)) priority = "low";
         let dueDate: string | undefined;
-        const dateMatch = taskText.match(/by\s+(\d{4}-\d{2}-\d{2})/i) || taskText.match(/due\s+(\d{4}-\d{2}-\d{2})/i);
+        let dueTime: string | undefined;
+        // Match dates: "by 2026-03-15", "due 2026-03-15", "by March 15"
+        const dateMatch = taskText.match(/(?:by|due|on)\s+(\d{4}-\d{2}-\d{2})/i);
         if (dateMatch) dueDate = dateMatch[1];
-        todos.push({ text: taskText, dueDate, priority });
+        // Match time: "at 9:00", "at 14:30"
+        const timeMatch = taskText.match(/(?:at)\s+(\d{1,2}:\d{2})/i);
+        if (timeMatch) dueTime = timeMatch[1];
+        seen.add(key);
+        todos.push({ text: taskText, dueDate, dueTime, priority });
       }
     }
   }
