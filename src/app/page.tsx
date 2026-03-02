@@ -1053,7 +1053,12 @@ export default function Home() {
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [selectedModel, setSelectedModel] = useState("oforo-general");
+  const [selectedModel, setSelectedModel] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("oforo-selected-model") || "oforo-general";
+    }
+    return "oforo-general";
+  });
   const [isStreaming, setIsStreaming] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [streamingContent, setStreamingContent] = useState("");
@@ -1289,11 +1294,17 @@ export default function Home() {
   function handleFocusChange(focusId: string) {
     setActiveFocus(focusId);
     const mapped = getModelForFocus(focusId);
-    if (mapped) setSelectedModel(mapped);
-    else if (focusId === "all") setSelectedModel("oforo-general");
+    const newModel = mapped || (focusId === "all" ? "oforo-general" : null);
+    if (newModel) {
+      setSelectedModel(newModel);
+      localStorage.setItem("oforo-selected-model", newModel);
+    }
   }
 
-  function handleModelSelect(id: string) { setSelectedModel(id); }
+  function handleModelSelect(id: string) {
+    setSelectedModel(id);
+    localStorage.setItem("oforo-selected-model", id);
+  }
   function handleProductSelected(model: Model) { if (model.productUrl) setProductPopup(model); }
 
   /* ── Streaming controls ── */

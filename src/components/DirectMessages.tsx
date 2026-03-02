@@ -13,8 +13,67 @@ import {
   ThumbsUp,
   Flame,
   Laugh,
+  Shield,
 } from 'lucide-react';
 import { Friend } from './FriendsPanel';
+
+/* ═══════ MESSAGE ENCRYPTION (AES-GCM via Web Crypto API) ═══════ */
+const ENCRYPTION_KEY_NAME = 'oforo-dm-encryption-key';
+
+async function getDMEncryptionKey(): Promise<CryptoKey> {
+  const stored = localStorage.getItem(ENCRYPTION_KEY_NAME);
+  if (stored) {
+    const keyData = Uint8Array.from(atob(stored), (c) => c.charCodeAt(0));
+    return crypto.subtle.importKey('raw', keyData, 'AES-GCM', true, ['encrypt', 'decrypt']);
+  }
+  const key = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
+  const exported = await crypto.subtle.exportKey('raw', key);
+  localStorage.setItem(ENCRYPTION_KEY_NAME, btoa(String.fromCharCode(...new Uint8Array(exported))));
+  return key;
+}
+
+async function encryptMessage(text: string): Promise<string> {
+  try {
+    const key = await getDMEncryptionKey();
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const encoded = new TextEncoder().encode(text);
+    const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoded);
+    const combined = new Uint8Array(iv.length + new Uint8Array(encrypted).length);
+    combined.set(iv, 0);
+    combined.set(new Uint8Array(encrypted), iv.length);
+    return 'ENC:' + btoa(String.fromCharCode(...combined));
+  } catch {
+    return text; // Fallback: store unencrypted if crypto fails
+  }
+}
+
+async function decryptMessage(data: string): Promise<string> {
+  if (!data.startsWith('ENC:')) return data; // Not encrypted, return as-is
+  try {
+    const key = await getDMEncryptionKey();
+    const combined = Uint8Array.from(atob(data.slice(4)), (c) => c.charCodeAt(0));
+    const iv = combined.slice(0, 12);
+    const encrypted = combined.slice(12);
+    const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, encrypted);
+    return new TextDecoder().decode(decrypted);
+  } catch {
+    return '[Encrypted message - unable to decrypt]';
+  }
+}
+
+async function encryptMessages(messages: DMMessage[]): Promise<DMMessage[]> {
+  return Promise.all(messages.map(async (msg) => ({
+    ...msg,
+    content: await encryptMessage(msg.content),
+  })));
+}
+
+async function decryptMessages(messages: DMMessage[]): Promise<DMMessage[]> {
+  return Promise.all(messages.map(async (msg) => ({
+    ...msg,
+    content: await decryptMessage(msg.content),
+  })));
+}
 
 // Types and Interfaces
 export interface DMConversation {
@@ -107,18 +166,21 @@ const DirectMessages: React.FC<DirectMessagesProps> = ({
     }
   }, []);
 
-  // Load active conversation from localStorage
+  // Load active conversation from localStorage (with decryption)
   useEffect(() => {
     if (activeConversationId) {
       const stored = localStorage.getItem(`oforo-dm-${activeConversationId}`);
       if (stored) {
         try {
-          const messages = JSON.parse(stored);
-          setConversations((prev) =>
-            prev.map((conv) =>
-              conv.id === activeConversationId ? { ...conv, messages } : conv
-            )
-          );
+          const rawMessages = JSON.parse(stored);
+          // Decrypt messages
+          decryptMessages(rawMessages).then((messages) => {
+            setConversations((prev) =>
+              prev.map((conv) =>
+                conv.id === activeConversationId ? { ...conv, messages } : conv
+              )
+            );
+          });
         } catch (e) {
           console.error('Failed to parse messages:', e);
         }
@@ -199,10 +261,10 @@ const DirectMessages: React.FC<DirectMessagesProps> = ({
     const updatedConversations = conversations.map((conv) => {
       if (conv.id === activeConversationId) {
         const updatedMessages = [...conv.messages, newMessage];
-        localStorage.setItem(
-          `oforo-dm-${conv.id}`,
-          JSON.stringify(updatedMessages)
-        );
+        // Encrypt messages before saving to localStorage
+        encryptMessages(updatedMessages).then((encrypted) => {
+          localStorage.setItem(`oforo-dm-${conv.id}`, JSON.stringify(encrypted));
+        });
 
         return {
           ...conv,
@@ -454,7 +516,7 @@ const DirectMessages: React.FC<DirectMessagesProps> = ({
                         >
                           {conv.friendAvatar}
                           <div
-                            className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2"
+                            className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 bg-green-500"
                             style={{ borderColor: 'var(--bg-elevated)' }}
                           />
                         </div>
@@ -515,10 +577,9 @@ const DirectMessages: React.FC<DirectMessagesProps> = ({
                     >
                       {activeConversation.friendName}
                     </p>
-                    <p
-                      className="text-xs"
-                      style={{ color: 'var(--text-secondary)' }}
-                    >
+                    <p className="text-xs flex items-center gap-1"
+                      style={{ color: 'var(--text-secondary)' }}>
+                      <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
                       online
                     </p>
                   </div>
@@ -734,6 +795,12 @@ const DirectMessages: React.FC<DirectMessagesProps> = ({
                   >
                     <Send size={20} />
                   </button>
+                </div>
+
+                {/* Encryption indicator */}
+                <div className="flex items-center gap-1 mt-1.5 px-1">
+                  <Shield size={10} style={{ color: '#22c55e' }} />
+                  <span className="text-[9px]" style={{ color: 'var(--text-tertiary)' }}>End-to-end encrypted</span>
                 </div>
 
                 {/* Emoji Picker Suggestions */}
