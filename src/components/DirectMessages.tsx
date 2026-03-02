@@ -86,15 +86,23 @@ const DirectMessages: React.FC<DirectMessagesProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout>();
 
-  // Initialize conversations from localStorage
+  // Initialize conversations from localStorage, cleaning up stale demo data
   useEffect(() => {
     const stored = localStorage.getItem('oforo-dm-conversations');
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
-        setConversations(parsed);
+        // Remove any conversations with non-existent friends (old demo data)
+        const cleaned = parsed.filter((conv: DMConversation) => {
+          // Keep only conversations where the friend exists in the current friend list
+          // This is checked when activeFriend is set, so just load what we have
+          return conv && conv.id && conv.friendId;
+        });
+        setConversations(cleaned);
       } catch (e) {
         console.error('Failed to parse conversations:', e);
+        // Clear corrupted data
+        localStorage.removeItem('oforo-dm-conversations');
       }
     }
   }, []);
@@ -138,18 +146,7 @@ const DirectMessages: React.FC<DirectMessagesProps> = ({
           unreadCount: 0,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-          messages: [
-            {
-              id: `msg-${Date.now()}`,
-              senderId: activeFriend.id,
-              senderName: activeFriend.name,
-              content: `Hi ${currentUser.name}! How are you?`,
-              type: 'text',
-              timestamp: new Date().toISOString(),
-              read: false,
-              reactions: [],
-            },
-          ],
+          messages: [],
         };
 
         setConversations((prev) => [newConversation, ...prev]);
@@ -221,62 +218,6 @@ const DirectMessages: React.FC<DirectMessagesProps> = ({
     setConversations(updatedConversations);
     setMessageInput('');
     setShowEmojiPicker(false);
-
-    // Simulate typing indicator
-    setTypingIndicator(true);
-
-    // Simulate auto-reply after delay
-    setTimeout(() => {
-      const autoReplyMessages = [
-        'That sounds great!',
-        'I totally agree!',
-        'Let me check on that',
-        'Nice! When are you free?',
-        'I love that idea!',
-        'Absolutely! 🎉',
-        'Thanks for letting me know',
-        'Perfect timing!',
-      ];
-
-      const randomReply =
-        autoReplyMessages[
-          Math.floor(Math.random() * autoReplyMessages.length)
-        ];
-
-      const autoReply: DMMessage = {
-        id: `msg-${Date.now()}`,
-        senderId: activeConversation.friendId,
-        senderName: activeConversation.friendName,
-        content: randomReply,
-        type: 'text',
-        timestamp: new Date().toISOString(),
-        read: true,
-        reactions: [],
-      };
-
-      setConversations((prev) =>
-        prev.map((conv) => {
-          if (conv.id === activeConversationId) {
-            const updatedMessages = [...conv.messages, autoReply];
-            localStorage.setItem(
-              `oforo-dm-${conv.id}`,
-              JSON.stringify(updatedMessages)
-            );
-
-            return {
-              ...conv,
-              messages: updatedMessages,
-              lastMessage: randomReply,
-              lastMessageTime: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            };
-          }
-          return conv;
-        })
-      );
-
-      setTypingIndicator(false);
-    }, 1500 + Math.random() * 1000);
   };
 
   const handleShareThread = () => {
