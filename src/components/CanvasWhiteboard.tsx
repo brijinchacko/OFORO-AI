@@ -204,11 +204,11 @@ export default function CanvasWhiteboard({ isOpen, onClose, mermaidCode, onInser
   function getMousePos(e: React.MouseEvent<SVGSVGElement>) {
     const svg = canvasRef.current;
     if (!svg) return { x: 0, y: 0 };
-    const rect = svg.getBoundingClientRect();
-    return {
-      x: (e.clientX - rect.left) / zoom,
-      y: (e.clientY - rect.top) / zoom,
-    };
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX;
+    pt.y = e.clientY;
+    const svgP = pt.matrixTransform(svg.getScreenCTM()?.inverse());
+    return { x: svgP.x, y: svgP.y };
   }
 
   function handleMouseDown(e: React.MouseEvent<SVGSVGElement>) {
@@ -287,7 +287,7 @@ export default function CanvasWhiteboard({ isOpen, onClose, mermaidCode, onInser
     setElements([]);
   }
 
-  function handleExport() {
+  function handleInsertToChat() {
     const svg = canvasRef.current;
     if (!svg) return;
     const svgData = new XMLSerializer().serializeToString(svg);
@@ -302,14 +302,30 @@ export default function CanvasWhiteboard({ isOpen, onClose, mermaidCode, onInser
       ctx.fillRect(0, 0, 1200, 800);
       ctx.drawImage(img, 0, 0);
       const dataUrl = canvas.toDataURL("image/png");
-      if (onInsertToChat) {
-        onInsertToChat(dataUrl);
-      } else {
-        const a = document.createElement("a");
-        a.href = dataUrl;
-        a.download = "oforo-canvas.png";
-        a.click();
-      }
+      if (onInsertToChat) onInsertToChat(dataUrl);
+    };
+    img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)));
+  }
+
+  function handleDownload() {
+    const svg = canvasRef.current;
+    if (!svg) return;
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const canvas = document.createElement("canvas");
+    canvas.width = 1200;
+    canvas.height = 800;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const img = new window.Image();
+    img.onload = () => {
+      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--bg-primary").trim() || "#0f172a";
+      ctx.fillRect(0, 0, 1200, 800);
+      ctx.drawImage(img, 0, 0);
+      const dataUrl = canvas.toDataURL("image/png");
+      const a = document.createElement("a");
+      a.href = dataUrl;
+      a.download = "oforo-canvas.png";
+      a.click();
     };
     img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)));
   }
@@ -385,12 +401,23 @@ export default function CanvasWhiteboard({ isOpen, onClose, mermaidCode, onInser
             </div>
           </div>
           <div className="flex items-center gap-1">
+            {onInsertToChat && (
+              <button onClick={handleInsertToChat} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                style={{ background: "var(--accent-primary)", color: "white" }}
+                title="Send drawing to chat">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="22" y1="2" x2="11" y2="13" />
+                  <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                </svg>
+                Send to Chat
+              </button>
+            )}
             {onShare && (
               <button onClick={onShare} className="p-2 rounded-lg transition-colors" style={{ color: "var(--accent)" }} title="Share canvas with friends">
                 <Share2 className="w-4 h-4" />
               </button>
             )}
-            <button onClick={handleExport} className="p-2 rounded-lg transition-colors" style={{ color: "var(--text-tertiary)" }} title="Export">
+            <button onClick={handleDownload} className="p-2 rounded-lg transition-colors" style={{ color: "var(--text-tertiary)" }} title="Download PNG">
               <Download className="w-4 h-4" />
             </button>
             <button onClick={() => setIsFullscreen(!isFullscreen)} className="p-2 rounded-lg transition-colors" style={{ color: "var(--text-tertiary)" }} title="Toggle fullscreen">
@@ -470,7 +497,10 @@ export default function CanvasWhiteboard({ isOpen, onClose, mermaidCode, onInser
               </svg>
               {/* Text input overlay */}
               {editingText && (
-                <div className="absolute" style={{ left: editingText.x * zoom, top: editingText.y * zoom }}>
+                <div className="absolute" style={{
+                  left: `${(editingText.x * zoom / 1200) * 100}%`,
+                  top: `${(editingText.y * zoom / 800) * 100}%`
+                }}>
                   <input type="text" autoFocus value={textInput} onChange={(e) => setTextInput(e.target.value)}
                     onKeyDown={(e) => { if (e.key === "Enter") handleAddText(); if (e.key === "Escape") setEditingText(null); }}
                     onBlur={handleAddText}

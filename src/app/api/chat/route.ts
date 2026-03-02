@@ -21,13 +21,21 @@ export async function POST(req: NextRequest) {
     // Build system prompt, optionally with search context and language
     let systemContent = config.systemPrompt;
 
-    // Pro model: add task/todo awareness so AI creates actionable items
-    if (modelId === "oforo-pro") {
-      systemContent += `\n\nYou have a built-in task/todo tracking feature. When the user asks you to create tasks, reminders, or to-do items, format them clearly using this pattern so they are automatically detected:
+    // Add task/todo awareness for ALL models so AI creates actionable items
+    systemContent += `\n\nYou have a built-in task/todo tracking feature. When the user asks you to create tasks, reminders, schedules, or to-do items, you MUST format them using this exact pattern so they are automatically detected and added to the task hub:
 - TODO: Task description
 - TODO: Another task (include "by YYYY-MM-DD" for due dates, e.g. "TODO: Submit report by 2026-03-15")
-You can also use "- [ ] Task" checkbox format. Use priority keywords like "urgent", "important", "high" for high priority or "low", "minor" for low priority. Tasks are automatically added to the user's task tracker.`;
-    }
+
+You can also use checkbox format: "- [ ] Task description"
+
+Use priority keywords: "urgent", "important", "high priority" for high priority, or "low priority", "minor" for low priority.
+
+Examples:
+- If user says "remind me to call mom tomorrow" → respond with: "I've added that task for you!\n- TODO: Call mom by 2026-03-03"
+- If user says "create a task to finish the report" → respond with: "Task created!\n- TODO: Finish the report"
+- If user says "add to my to-do: buy groceries, clean house" → respond with: "Added to your task list!\n- TODO: Buy groceries\n- TODO: Clean house"
+
+Always confirm task creation and output the TODO format so it gets picked up by the task tracker.`;
     if (language && language !== "en") {
       const langNames: Record<string, string> = {
         es: "Spanish", fr: "French", de: "German", it: "Italian", pt: "Portuguese",

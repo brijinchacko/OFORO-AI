@@ -585,6 +585,8 @@ function Sidebar({
   voiceThreads: VoiceThread[];
   onSelectVoiceThread: (id: string) => void;
   onDeleteVoiceThread: (id: string) => void;
+  onRenameVoiceThread: (id: string) => void;
+  onTogglePinVoiceThread: (id: string) => void;
   isMax: boolean;
   sidebarTab: "chats" | "messages" | "workspaces";
   onTabChange: (tab: "chats" | "messages" | "workspaces") => void;
@@ -597,6 +599,7 @@ function Sidebar({
   const [profileOpen, setProfileOpen] = useState(false);
   const [productsSubOpen, setProductsSubOpen] = useState(false);
   const [contextMenuId, setContextMenuId] = useState<string | null>(null);
+  const [voiceContextMenuId, setVoiceContextMenuId] = useState<string | null>(null);
   const [currentLanguage, setCurrentLanguage] = useState("English");
   const router = useRouter();
 
@@ -844,16 +847,43 @@ function Sidebar({
                     style={{ color: "var(--text-secondary)" }}
                     onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-hover)")}
                     onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+                    {(vt as any).pinned && <Pin className="w-3 h-3 flex-shrink-0 opacity-50" />}
                     <Mic className="w-3.5 h-3.5 flex-shrink-0 opacity-60" />
                     <span className="truncate flex-1">{vt.title}</span>
                     <span className="text-[10px] flex-shrink-0 opacity-40">{vt.messages.length}</span>
                   </button>
                   <button
-                    onClick={(e) => { e.stopPropagation(); onDeleteVoiceThread(vt.id); }}
+                    onClick={(e) => { e.stopPropagation(); setVoiceContextMenuId(voiceContextMenuId === vt.id ? null : vt.id); }}
                     className="absolute right-1 top-1/2 -translate-y-1/2 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
                     style={{ color: "var(--text-tertiary)", background: "var(--bg-secondary)" }}>
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <MoreHorizontal className="w-3.5 h-3.5" />
                   </button>
+                  {voiceContextMenuId === vt.id && (
+                    <div className="absolute right-0 top-full mt-1 z-50 w-40 rounded-xl py-1.5 shadow-xl animate-fade-in"
+                      style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-hover)" }}>
+                      <button onClick={() => { onRenameVoiceThread(vt.id); setVoiceContextMenuId(null); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-xs transition-colors"
+                        style={{ color: "var(--text-secondary)" }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-hover)")}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+                        <Pencil className="w-3.5 h-3.5" /> Rename
+                      </button>
+                      <button onClick={() => { onTogglePinVoiceThread(vt.id); setVoiceContextMenuId(null); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-xs transition-colors"
+                        style={{ color: "var(--text-secondary)" }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-hover)")}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+                        {(vt as any).pinned ? <PinOff className="w-3.5 h-3.5" /> : <Pin className="w-3.5 h-3.5" />}
+                        {(vt as any).pinned ? "Unpin" : "Pin to top"}
+                      </button>
+                      <button onClick={() => { onDeleteVoiceThread(vt.id); setVoiceContextMenuId(null); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-xs transition-colors text-red-400"
+                        onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-hover)")}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+                        <Trash2 className="w-3.5 h-3.5" /> Delete
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </>
@@ -1405,8 +1435,8 @@ export default function Home() {
         }
       }
 
-      // Pro-only: Detect todos from AI response and add to localStorage
-      if (!user || canAccessFeature("taskhub")) {
+      // Always detect todos from AI response and add to localStorage
+      if (true) { // Always detect tasks from AI responses
         const detectedTodos = parseTodosFromAIResponse(fullContent);
         if (detectedTodos.length > 0) {
           const existingRaw = localStorage.getItem("oforo-todos");
@@ -1499,6 +1529,21 @@ export default function Home() {
           if (updated.length === 0) localStorage.removeItem("oforo-voice-threads");
           else localStorage.setItem("oforo-voice-threads", JSON.stringify(updated));
           if (activeVoiceThreadId === id) setActiveVoiceThreadId(null);
+        }}
+        onRenameVoiceThread={(id) => {
+          const thread = voiceThreads.find((t) => t.id === id);
+          if (!thread) return;
+          const newTitle = prompt("Rename voice thread:", thread.title);
+          if (newTitle && newTitle.trim()) {
+            const updated = voiceThreads.map((t) => t.id === id ? { ...t, title: newTitle.trim() } : t);
+            setVoiceThreads(updated);
+            localStorage.setItem("oforo-voice-threads", JSON.stringify(updated));
+          }
+        }}
+        onTogglePinVoiceThread={(id) => {
+          const updated = voiceThreads.map((t) => t.id === id ? { ...t, pinned: !(t as any).pinned } : t);
+          setVoiceThreads(updated);
+          localStorage.setItem("oforo-voice-threads", JSON.stringify(updated));
         }}
         isMax={!user || canAccessFeature("circle")}
         sidebarTab={sidebarTab}
