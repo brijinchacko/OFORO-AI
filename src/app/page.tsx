@@ -199,7 +199,12 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  // productPopup effect removed — products moved to top menu
+  // Listen for openFriendsPanel custom event (from WelcomeScreen)
+  useEffect(() => {
+    const handler = () => { if (user) setFriendsPanelOpen(true); };
+    window.addEventListener("openFriendsPanel", handler);
+    return () => window.removeEventListener("openFriendsPanel", handler);
+  }, [user]);
 
   useEffect(() => {
     if (inChat && chatInputRef.current) {

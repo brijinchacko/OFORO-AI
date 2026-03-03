@@ -9,6 +9,7 @@ import {
   X,
   Upload,
   File,
+  Users,
 } from "lucide-react";
 import type { UploadedFile } from "@/types/chat";
 import { ModelChips } from "@/components/chat/ModelChips";
@@ -76,11 +77,6 @@ export function WelcomeScreen({
           </h1>
         </div>
 
-        {/* Model chips */}
-        <div className="mb-3 animate-slide-up">
-          <ModelChips tier={selectedTier} selectedModel={selectedModel} onSelectModel={onSelectModel} />
-        </div>
-
         {/* Input */}
         <div className="animate-slide-up mb-6">
           <div className="rounded-2xl focus-glow transition-all"
@@ -110,7 +106,7 @@ export function WelcomeScreen({
               />
             </div>
             <div className="flex items-center justify-between px-3 pb-3">
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-0.5">
                 <button onClick={() => setWebSearchEnabled(!webSearchEnabled)}
                   className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all"
                   style={{
@@ -122,6 +118,7 @@ export function WelcomeScreen({
                   <Globe className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Search</span>
                 </button>
+                <ModelChips tier={selectedTier} selectedModel={selectedModel} onSelectModel={onSelectModel} />
               </div>
               <div className="flex items-center gap-1">
                 <input ref={fileInputRef} type="file" className="hidden" onChange={onFileChange}
@@ -155,9 +152,34 @@ export function WelcomeScreen({
           ))}
         </div>
 
+        {/* Friends / Collaboration highlight */}
+        <div className="mt-8 animate-fade-in">
+          <Link href={user ? "#" : "/auth"}
+            onClick={(e) => {
+              if (user) {
+                e.preventDefault();
+                window.dispatchEvent(new CustomEvent("openFriendsPanel"));
+              }
+            }}
+            className="flex items-center gap-3 mx-auto max-w-sm px-4 py-3 rounded-xl transition-all hover:scale-[1.01]"
+            style={{ border: "1px solid var(--border-primary)", background: "var(--bg-secondary)" }}>
+            <div className="p-2 rounded-lg" style={{ background: "rgba(59,130,246,0.1)" }}>
+              <Users className="w-4 h-4" style={{ color: "#3b82f6" }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium" style={{ color: "var(--text-primary)" }}>Chat with friends while using AI</p>
+              <p className="text-[11px]" style={{ color: "var(--text-tertiary)" }}>Add friends, message, and collaborate in real time</p>
+            </div>
+            <span className="text-[10px] px-2 py-0.5 rounded-full font-medium flex-shrink-0"
+              style={{ background: "rgba(59,130,246,0.1)", color: "#3b82f6" }}>
+              New
+            </span>
+          </Link>
+        </div>
+
         {/* Sign up prompt for non-logged-in users */}
         {!user && (
-          <div className="text-center mt-8 animate-fade-in">
+          <div className="text-center mt-6 animate-fade-in">
             <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
               <Link href="/auth" className="font-medium transition-colors" style={{ color: "var(--accent)" }}>Sign up</Link>
               {" "}to save your conversations and unlock more features.

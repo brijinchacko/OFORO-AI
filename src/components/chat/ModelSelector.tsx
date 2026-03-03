@@ -3,23 +3,10 @@
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { usePlan } from "@/components/PlanProvider";
-import {
-  Sparkles,
-  Brain,
-  Crown,
-  Check,
-  ChevronDown,
-  Lock,
-} from "lucide-react";
-import { oforoTiers, type OforoTier } from "@/lib/models";
+import { ChevronDown, Lock, Check } from "lucide-react";
+import { oforoTiers, getModelsForTier, type OforoTier } from "@/lib/models";
 
-const tierIcons: Record<OforoTier, React.ReactNode> = {
-  mini: <Sparkles className="w-3.5 h-3.5" />,
-  pro: <Brain className="w-3.5 h-3.5" />,
-  max: <Crown className="w-3.5 h-3.5" />,
-};
-
-/* ═══════ TIER SELECTOR (top bar) ═══════ */
+/* ═══════ TIER SELECTOR (top bar) — minimal, with model names ═══════ */
 export function ModelSelector({ selected, onSelect }: {
   selected: OforoTier; onSelect: (tier: OforoTier) => void;
 }) {
@@ -42,12 +29,11 @@ export function ModelSelector({ selected, onSelect }: {
       <button onClick={() => setOpen(!open)}
         className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-colors"
         style={{ border: "1px solid var(--border-primary)" }}>
-        <span style={{ color: currentTier.color }}>{tierIcons[currentTier.id]}</span>
         <span className="font-medium">{currentTier.name}</span>
         <ChevronDown className={`w-3 h-3 transition-transform ${open ? "rotate-180" : ""}`} style={{ color: "var(--text-tertiary)" }} />
       </button>
       {open && (
-        <div className="absolute top-full left-0 mt-1.5 w-52 rounded-lg shadow-2xl overflow-hidden z-50 animate-fade-in"
+        <div className="absolute top-full left-0 mt-1.5 w-64 rounded-lg shadow-2xl overflow-hidden z-50 animate-fade-in"
           style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-hover)" }}>
           <div className="p-1.5">
             {oforoTiers.map((tier) => {
@@ -57,6 +43,14 @@ export function ModelSelector({ selected, onSelect }: {
                 tier.id === "pro" ? "gpt-4o" : tier.id === "max" ? "claude-opus" : "gemini-flash"
               );
               const locked = needsAuth || lockedByPlan;
+              const models = getModelsForTier(tier.id);
+              // Show only the models unique to this tier (not inherited from lower tiers)
+              const tierOwnModels = tier.id === "mini"
+                ? models
+                : tier.id === "pro"
+                  ? models.filter(m => m.tier === "pro")
+                  : models.filter(m => m.tier === "max");
+
               return (
                 <button key={tier.id}
                   onClick={() => {
@@ -72,17 +66,22 @@ export function ModelSelector({ selected, onSelect }: {
                     }
                     onSelect(tier.id); setOpen(false);
                   }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md transition-colors"
+                  className="w-full text-left px-3 py-2 rounded-md transition-colors"
                   style={{ background: selected === tier.id ? "var(--bg-hover)" : "transparent", opacity: locked ? 0.5 : 1 }}>
-                  <span style={{ color: tier.color }}>{tierIcons[tier.id]}</span>
-                  <div className="flex-1 text-left">
-                    <span className="text-xs font-medium">{tier.name}</span>
-                    <span className="text-[10px] ml-1.5" style={{ color: "var(--text-tertiary)" }}>{tier.description}</span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium">{tier.name}</span>
+                      <span className="text-[10px]" style={{ color: "var(--text-tertiary)" }}>{tier.description}</span>
+                    </div>
+                    {locked && <Lock className="w-3 h-3 flex-shrink-0" style={{ color: "var(--text-tertiary)" }} />}
+                    {selected === tier.id && !locked && <Check className="w-3 h-3 flex-shrink-0 text-blue-500" />}
                   </div>
-                  {locked && (
-                    <Lock className="w-3 h-3 flex-shrink-0" style={{ color: tier.color }} />
-                  )}
-                  {selected === tier.id && !locked && <Check className="w-3 h-3 flex-shrink-0 text-blue-500" />}
+                  <p className="text-[10px] mt-0.5" style={{ color: "var(--text-tertiary)" }}>
+                    {tier.id === "mini" && "All models: "}
+                    {tier.id === "pro" && "+ "}
+                    {tier.id === "max" && "+ "}
+                    {tierOwnModels.map(m => m.name).join(", ")}
+                  </p>
                 </button>
               );
             })}

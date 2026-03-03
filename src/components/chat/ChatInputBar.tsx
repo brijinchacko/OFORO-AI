@@ -72,10 +72,6 @@ export function ChatInputBar({
   return (
     <div className="px-4 pb-4 pt-2 flex-shrink-0" style={{ background: "var(--bg-primary)" }}>
       <div className="max-w-3xl mx-auto">
-        {/* Model chips */}
-        <div className="mb-2">
-          <ModelChips tier={selectedTier} selectedModel={selectedModel} onSelectModel={onSelectModel} />
-        </div>
         <div className="rounded-2xl focus-glow transition-all"
           style={{ background: "var(--bg-input)", border: "1px solid var(--border-primary)" }}>
           {uploadedFile && (
@@ -102,7 +98,7 @@ export function ChatInputBar({
             />
           </div>
           <div className="flex items-center justify-between px-3 pb-3">
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-0.5">
               <button onClick={() => setWebSearchEnabled(!webSearchEnabled)}
                 className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all"
                 style={{
@@ -113,6 +109,7 @@ export function ChatInputBar({
                 <Globe className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Search</span>
               </button>
+              <ModelChips tier={selectedTier} selectedModel={selectedModel} onSelectModel={onSelectModel} />
             </div>
             <div className="flex items-center gap-1">
               <input ref={chatFileInputRef} type="file" className="hidden" onChange={onFileChange}
