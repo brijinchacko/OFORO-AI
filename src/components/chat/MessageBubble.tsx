@@ -6,6 +6,7 @@ import {
   Copy,
   File,
   Search,
+  Zap,
 } from "lucide-react";
 import type { Message, SearchResult, SearchImage } from "@/types/chat";
 import { renderMarkdown } from "./MarkdownRenderer";
@@ -41,6 +42,12 @@ export function MessageBubble({ message }: { message: Message }) {
           </div>
         ) : (
           <div>
+            {message.autoRouted && (
+              <div className="flex items-center gap-1 mb-1.5 text-[10px]" style={{ color: "#3b82f6" }}>
+                <Zap className="w-3 h-3" />
+                <span>Auto-routed to <strong>{message.autoRouted.modelName}</strong> · {message.autoRouted.reason}</span>
+              </div>
+            )}
             {message.sources && message.sources.length > 0 && <TabbedSourceCards sources={message.sources} images={message.images} />}
             <div className="chat-prose text-sm leading-relaxed" style={{ color: "var(--text-primary)" }}>
               {renderMarkdown(message.content)}

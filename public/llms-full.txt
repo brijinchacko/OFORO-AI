@@ -1,0 +1,182 @@
+# Oforo AI — Complete Platform Reference
+
+> Oforo AI is a multi-model AI chat platform with voice interaction, canvas whiteboard, task management, and collaborative tools. Website: https://oforo.ai
+
+## Platform Overview
+
+Oforo AI provides access to 8+ AI models through a single unified interface. The platform is designed for individuals, students, developers, and professionals who want the flexibility of multiple AI models without switching between different apps. Oforo is built by Wartens, with offices in Milton Keynes, United Kingdom and Bangalore, India.
+
+### What Makes Oforo Different
+
+1. **Multi-Model Access**: One platform gives access to GPT-4o, Claude Sonnet 4, Gemini 2.0 Flash, DeepSeek V3, Llama 3.3 70B, Mistral Small, and more. Users don't need separate subscriptions.
+
+2. **Auto Model Routing**: When users select "Auto" mode, Oforo analyzes each prompt and routes it to the most suitable model. Code questions go to Claude Sonnet, mathematical problems to DeepSeek, creative writing to GPT, and general questions to fast models like Gemini Flash.
+
+3. **Side-by-Side Comparison**: Users can send the same prompt to 2-3 models simultaneously and see all responses side by side. This helps in choosing which model works best for specific use cases.
+
+4. **No Lock-in**: Users can import their ChatGPT conversation history and export their data at any time. Conversations are stored locally in the browser.
+
+## Detailed Feature List
+
+### Chat Features
+- Streaming responses with real-time token display
+- Markdown rendering with syntax highlighting for code
+- Message copy, regenerate functionality
+- Auto-saving conversations to localStorage
+- Conversation history with search, pin, rename, and delete
+- File attachments (PDF, CSV, JSON, images, documents)
+- Base64 image support for vision-capable models
+
+### Auto Model Routing
+- Analyzes user prompt for topic, complexity, and intent
+- Routes code/programming questions to Claude Sonnet
+- Routes mathematical/logical problems to DeepSeek V3
+- Routes creative writing to GPT models
+- Routes quick factual questions to Gemini Flash
+- Shows which model was selected and why
+- Falls back to tier-appropriate default model
+
+### Side-by-Side Model Comparison
+- Select 2-3 models from any tier
+- Type a single prompt
+- Responses stream in parallel columns
+- Copy individual responses
+- Visual comparison layout
+
+### Voice Mode
+- Speech-to-text transcription
+- AI response with text-to-speech playback
+- Voice conversation threads (saved separately from text chats)
+- Thread management: rename, pin, delete
+
+### Canvas Whiteboard
+- Freehand drawing with pen tools
+- AI-generated Mermaid diagrams auto-render on canvas
+- Insert canvas drawings into chat
+- Share canvas with friends (Max tier)
+
+### Web Search Integration
+- Toggle web search on/off per message
+- Real-time search results from the web
+- Image search results
+- Source citations with links ([1], [2], etc.)
+- Search results appear alongside AI response
+
+### Task Hub & Scheduler
+- AI automatically detects TODO items from responses
+- Task list with priorities (high, normal, low)
+- Due date support (parsed from natural language)
+- Scheduled queries: set daily automated prompts
+- Notification system for completed scheduled queries
+
+### Local File Browser
+- Browse local file system using File System Access API
+- Read and analyze files from disk
+- Works in Chrome, Edge, Brave (Chromium browsers)
+- Lists up to 100 files with folder structure
+
+### Personalization System
+- Learns user interests from conversation topics (20 categories)
+- Detects user knowledge level (signals like "I've built...", "my project...")
+- Adapts response style: concise, detailed, technical, or casual
+- Builds context string injected into AI system prompt
+- All data stored locally in browser (localStorage)
+
+### Friends & Collaboration (Max Tier)
+- Friend system with add/accept/decline
+- Direct messaging between users
+- Share chat threads with friends
+- Shared workspaces for collaboration
+- Notification center for friend activities
+
+### Import & Export
+- Import ChatGPT conversations from JSON export
+- Conversations stored in browser localStorage
+- No server-side conversation storage
+
+### Multi-Language Support
+Supported languages: English, Spanish, French, German, Italian, Portuguese, Dutch, Russian, Chinese, Japanese, Korean, Arabic, Hindi, Malayalam, Tamil, Turkish, Polish, Swedish, Danish, Norwegian.
+
+### Keyboard Shortcuts
+- Enter: Send message
+- Shift+Enter: New line
+- File upload via paperclip button
+
+## API Access
+
+Oforo provides API access for developers who want to integrate AI capabilities into their applications. Documentation available at https://oforo.ai/api-access and https://oforo.ai/api-reference.
+
+## Model Details
+
+### Free Tier (No account required)
+| Model | Provider | Best For |
+|-------|----------|----------|
+| Llama 3.3 70B | Meta | General questions, coding, reasoning |
+| Mistral Small | Mistral AI | Quick answers, summarization |
+
+### Mini Tier
+| Model | Provider | Best For |
+|-------|----------|----------|
+| Gemini 2.0 Flash | Google | Fast responses, general knowledge |
+| DeepSeek V3 | DeepSeek | Mathematics, logic, coding |
+
+### Pro Tier
+| Model | Provider | Best For |
+|-------|----------|----------|
+| GPT-4o Mini | OpenAI | Creative writing, analysis |
+| Claude Sonnet 4 | Anthropic | Code, technical writing, reasoning |
+
+### Max Tier
+| Model | Provider | Best For |
+|-------|----------|----------|
+| GPT-4o | OpenAI | Most capable OpenAI model |
+| Claude Sonnet 4 | Anthropic | Advanced reasoning, code generation |
+
+## Products by Oforo
+
+### LADX (ladx.ai)
+AI for industrial automation. Helps with PLC programming (Ladder Logic, Structured Text), SCADA systems, HMI design, motor sizing, VFD configuration, and manufacturing process optimization.
+
+### SEEKOF (seekof.cloud)
+AI tool discovery platform. Helps users find the right AI tools for their specific needs across categories like productivity, development, design, and more.
+
+### nxtED (nxted.ai)
+Career development and skill guidance AI. Provides personalized career advice, skill gap analysis, learning path recommendations, and interview preparation.
+
+## Technical Stack
+- **Frontend**: Next.js 14 (App Router), React, TypeScript, Tailwind CSS
+- **AI Backend**: OpenRouter API (routing to multiple model providers)
+- **Authentication**: JWT with OTP email verification
+- **Database**: SQLite (user accounts, friends)
+- **Storage**: Browser localStorage (conversations, preferences)
+- **Hosting**: Custom VPS deployment
+
+## Company Information
+
+- **Company Name**: Oforo AI
+- **Parent Company**: Wartens
+- **Website**: https://oforo.ai
+- **Headquarters**: Milton Keynes, United Kingdom
+- **Second Office**: Bangalore, India
+- **Industry**: Artificial Intelligence, SaaS
+- **Founded**: UK-based AI company
+
+## Pages
+
+- Homepage: https://oforo.ai
+- Features: https://oforo.ai/features
+- Pricing: https://oforo.ai/pricing
+- About: https://oforo.ai/about
+- Blog: https://oforo.ai/blog
+- Documentation: https://oforo.ai/docs
+- API Access: https://oforo.ai/api-access
+- API Reference: https://oforo.ai/api-reference
+- Careers: https://oforo.ai/careers
+- Contact: https://oforo.ai/contact
+- Help: https://oforo.ai/help
+- LADX Product: https://oforo.ai/products/ladx
+- SEEKOF Product: https://oforo.ai/products/seekof
+- nxtED Product: https://oforo.ai/products/nxted
+- Privacy Policy: https://oforo.ai/privacy
+- Terms of Service: https://oforo.ai/terms
+- Security: https://oforo.ai/security

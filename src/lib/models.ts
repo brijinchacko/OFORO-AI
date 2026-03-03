@@ -318,3 +318,87 @@ export function getDefaultModelForTier(tier: OforoTier): string {
 export function getModelConfig(modelId: string): ModelConfig {
   return modelConfigs.find((m) => m.id === modelId) || modelConfigs[0];
 }
+
+/* ═══════════════════════════════════════
+   AUTO MODEL ROUTING
+   Analyzes the user's prompt and picks the
+   best model from the user's accessible tier.
+   ═══════════════════════════════════════ */
+
+type PromptCategory = "code" | "math" | "creative" | "analysis" | "general";
+
+const CATEGORY_PATTERNS: { category: PromptCategory; patterns: RegExp[] }[] = [
+  {
+    category: "code",
+    patterns: [
+      /\b(code|coding|program|function|debug|compile|syntax|api|endpoint|script|html|css|javascript|typescript|python|java|rust|golang|react|next\.?js|sql|database|git|docker|regex|algorithm|refactor|deploy|npm|pip|import|class\s|def\s|const\s|let\s|var\s|async|await|promise|callback)\b/i,
+      /```[\s\S]*```/,
+      /\b(fix|bug|error|exception|stack\s?trace|console\.log|print\()\b/i,
+    ],
+  },
+  {
+    category: "math",
+    patterns: [
+      /\b(math|calcul|equation|formula|algebra|geometry|statistics|probability|derivative|integral|matrix|vector|proof|theorem|solve\s+(for|this|the))\b/i,
+      /\b(logic|reasoning|puzzle|riddle|brain\s?teaser|step.by.step|think\s+(through|about|carefully))\b/i,
+      /[=+\-*/^]{2,}|\d+\s*[+\-*/^]\s*\d+/,
+    ],
+  },
+  {
+    category: "creative",
+    patterns: [
+      /\b(write|story|poem|essay|blog|article|creative|fiction|novel|chapter|lyric|song|slogan|tagline|script|dialogue|character|plot|narrative|tone|style|rewrite|rephrase|paraphrase)\b/i,
+      /\b(email|letter|proposal|pitch|resume|cover\s?letter|bio|description|caption|headline|title|name\s+ideas?|brainstorm)\b/i,
+    ],
+  },
+  {
+    category: "analysis",
+    patterns: [
+      /\b(analy[sz]|compare|contrast|evaluate|assess|review|critique|pros?\s+and\s+cons?|advantages?\s+and\s+disadvantages?|strengths?\s+and\s+weaknesses?|trade.?offs?)\b/i,
+      /\b(research|study|report|summarize|summary|explain\s+(how|why|what)|deep\s+dive|in.depth|comprehensive|detailed)\b/i,
+      /\b(strategy|plan|architecture|design\s+system|framework|approach|methodology|best\s+practices?)\b/i,
+    ],
+  },
+];
+
+function categorizePrompt(text: string): PromptCategory {
+  const scores: Record<PromptCategory, number> = { code: 0, math: 0, creative: 0, analysis: 0, general: 0 };
+
+  for (const { category, patterns } of CATEGORY_PATTERNS) {
+    for (const pattern of patterns) {
+      const matches = text.match(pattern);
+      if (matches) scores[category] += matches.length;
+    }
+  }
+
+  const best = Object.entries(scores).sort((a, b) => b[1] - a[1])[0];
+  return best[1] > 0 ? (best[0] as PromptCategory) : "general";
+}
+
+/* Model preference per category, ordered by priority (best first) */
+const CATEGORY_MODEL_PREFS: Record<PromptCategory, string[]> = {
+  code:     ["claude-sonnet", "deepseek-v3", "gpt-4o", "claude-opus", "gpt-4o-mini", "gemini-flash"],
+  math:     ["o3", "claude-opus", "claude-sonnet", "gpt-4o", "deepseek-v3", "gemini-flash"],
+  creative: ["gpt-4o", "claude-sonnet", "claude-opus", "gpt-4o-mini", "gemini-flash", "deepseek-v3"],
+  analysis: ["claude-sonnet", "claude-opus", "gpt-4o", "o3", "deepseek-v3", "gemini-flash"],
+  general:  ["gemini-flash", "gpt-4o-mini", "deepseek-v3", "llama-3.3-70b", "gpt-4o", "claude-sonnet"],
+};
+
+export function autoRouteModel(prompt: string, tier: OforoTier): { modelId: string; category: PromptCategory; reason: string } {
+  const category = categorizePrompt(prompt);
+  const available = getModelsForTier(tier);
+  const availableIds = new Set(available.map((m) => m.id));
+  const prefs = CATEGORY_MODEL_PREFS[category];
+
+  const modelId = prefs.find((id) => availableIds.has(id)) || getDefaultModelForTier(tier);
+
+  const reasons: Record<PromptCategory, string> = {
+    code: "Best for code",
+    math: "Best for reasoning",
+    creative: "Best for writing",
+    analysis: "Best for analysis",
+    general: "Fast & efficient",
+  };
+
+  return { modelId, category, reason: reasons[category] };
+}

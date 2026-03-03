@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import Link from "next/link";
 import {
   Paperclip,
@@ -10,10 +10,46 @@ import {
   Upload,
   File,
   Users,
+  Shield,
+  Unlock,
+  EyeOff,
+  Columns,
+  FolderOpen,
+  Mic,
+  PenTool,
 } from "lucide-react";
 import type { UploadedFile } from "@/types/chat";
 import { ModelChips } from "@/components/chat/ModelChips";
 import type { OforoTier } from "@/lib/models";
+
+function getTimeOfDay(): "morning" | "afternoon" | "evening" {
+  const hour = new Date().getHours();
+  if (hour < 12) return "morning";
+  if (hour < 17) return "afternoon";
+  return "evening";
+}
+
+const greetingsWithName: ((name: string) => string)[] = [
+  (name) => `Good ${getTimeOfDay()}, ${name}`,
+  (name) => `Hey ${name}, what's on your mind?`,
+  (name) => `Welcome back, ${name}`,
+  (name) => `Ready when you are, ${name}`,
+  (name) => `Great to see you, ${name}`,
+  (name) => `What shall we explore, ${name}?`,
+  (name) => `Let's build something, ${name}`,
+  (name) => `How can I help today, ${name}?`,
+  (name) => `What's the plan, ${name}?`,
+  (name) => `Hello ${name}, let's get started`,
+];
+
+const greetingsGeneric = [
+  "What can I help with?",
+  "Ask me anything",
+  "Let's get started",
+  "What's on your mind?",
+  "Ready to help you think",
+  "How can I assist you today?",
+];
 
 const suggestions = [
   "Explain how transformer models work",
@@ -42,6 +78,11 @@ export function WelcomeScreen({
   selectedTier,
   selectedModel,
   onSelectModel,
+  autoRouteInfo,
+  onCompare,
+  onBrowseFiles,
+  onVoiceMode,
+  onCanvas,
 }: {
   user: { id: string; email: string; name: string } | null;
   firstName: string;
@@ -62,18 +103,26 @@ export function WelcomeScreen({
   selectedTier: OforoTier;
   selectedModel: string;
   onSelectModel: (modelId: string) => void;
+  autoRouteInfo?: { modelName: string; reason: string } | null;
+  onCompare: () => void;
+  onBrowseFiles: () => void;
+  onVoiceMode: () => void;
+  onCanvas: () => void;
 }) {
+  const greeting = useMemo(() => {
+    if (user && firstName) {
+      return greetingsWithName[Math.floor(Math.random() * greetingsWithName.length)](firstName);
+    }
+    return greetingsGeneric[Math.floor(Math.random() * greetingsGeneric.length)];
+  }, [user, firstName]);
+
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-4 overflow-y-auto">
       <div className="w-full max-w-2xl mx-auto pb-8">
         {/* Greeting */}
         <div className="flex flex-col items-center mb-8 animate-fade-in">
           <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight mb-1 text-center">
-            {user ? (
-              <>Welcome back, {firstName}</>
-            ) : (
-              <>What can I help with?</>
-            )}
+            {greeting}
           </h1>
         </div>
 
@@ -107,6 +156,7 @@ export function WelcomeScreen({
             </div>
             <div className="flex items-center justify-between px-3 pb-3">
               <div className="flex items-center gap-0.5">
+                <ModelChips tier={selectedTier} selectedModel={selectedModel} onSelectModel={onSelectModel} autoRouteInfo={autoRouteInfo} />
                 <button onClick={() => setWebSearchEnabled(!webSearchEnabled)}
                   className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all"
                   style={{
@@ -118,7 +168,6 @@ export function WelcomeScreen({
                   <Globe className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Search</span>
                 </button>
-                <ModelChips tier={selectedTier} selectedModel={selectedModel} onSelectModel={onSelectModel} />
               </div>
               <div className="flex items-center gap-1">
                 <input ref={fileInputRef} type="file" className="hidden" onChange={onFileChange}
@@ -126,6 +175,24 @@ export function WelcomeScreen({
                 <button onClick={() => fileInputRef.current?.click()} className="p-2 rounded-lg transition-colors" style={{ color: "var(--text-tertiary)" }}
                   title="Attach file">
                   <Paperclip className="w-4 h-4" />
+                </button>
+                <button onClick={onBrowseFiles} className="p-2 rounded-lg transition-colors" style={{ color: "var(--text-tertiary)" }}
+                  title="Browse files">
+                  <FolderOpen className="w-4 h-4" />
+                </button>
+                <button onClick={onCanvas} className="p-2 rounded-lg transition-colors" style={{ color: "var(--text-tertiary)" }}
+                  title="Canvas">
+                  <PenTool className="w-4 h-4" />
+                </button>
+                <button onClick={onVoiceMode} className="p-2 rounded-lg transition-colors" style={{ color: "var(--text-tertiary)" }}
+                  title="Voice mode">
+                  <Mic className="w-4 h-4" />
+                </button>
+                <button onClick={onCompare}
+                  className="p-2 rounded-lg transition-all"
+                  style={{ background: "rgba(139,92,246,0.1)", color: "#8b5cf6" }}
+                  title="Compare models side-by-side">
+                  <Columns className="w-4 h-4" />
                 </button>
                 <button onClick={() => onSend()} disabled={!input.trim() || isStreaming}
                   className="p-2 rounded-lg transition-all"
@@ -152,8 +219,23 @@ export function WelcomeScreen({
           ))}
         </div>
 
+        {/* Trust badges — anti-lock-in messaging */}
+        <div className="flex flex-wrap justify-center gap-3 mt-6 animate-fade-in">
+          {[
+            { icon: <Shield className="w-3 h-3" />, text: "No Ads, Ever", color: "#22c55e" },
+            { icon: <Unlock className="w-3 h-3" />, text: "No Lock-in", color: "#3b82f6" },
+            { icon: <EyeOff className="w-3 h-3" />, text: "Your Data Stays Yours", color: "#a855f7" },
+          ].map((badge) => (
+            <div key={badge.text} className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium"
+              style={{ background: `${badge.color}10`, color: badge.color, border: `1px solid ${badge.color}20` }}>
+              {badge.icon}
+              <span>{badge.text}</span>
+            </div>
+          ))}
+        </div>
+
         {/* Friends / Collaboration highlight */}
-        <div className="mt-8 animate-fade-in">
+        <div className="mt-6 animate-fade-in">
           <Link href={user ? "#" : "/auth"}
             onClick={(e) => {
               if (user) {

@@ -1,0 +1,53 @@
+# Oforo AI
+
+> Oforo is an AI platform that provides multi-model chat, voice interaction, canvas whiteboard, and collaborative tools. Built by Oforo AI (a Wartens subsidiary) based in Milton Keynes, UK and Bangalore, India.
+
+## What is Oforo AI?
+
+Oforo AI is an intelligent chat platform that gives users access to 8+ AI models (GPT-4o, Claude Sonnet, Gemini Flash, DeepSeek V3, Llama, Mistral) through a single interface. Unlike other AI chat tools, Oforo features Auto Model Routing that automatically picks the best model for each query, and Side-by-Side Comparison that lets users compare responses from multiple models simultaneously.
+
+## Core Features
+
+- **Auto Model Routing**: Automatically selects the best AI model based on the user's query (code goes to Claude, math to DeepSeek, creative tasks to GPT).
+- **Side-by-Side Model Comparison**: Compare responses from 2-3 AI models at once for the same prompt.
+- **Voice Mode**: Speak to AI naturally with speech-to-text and text-to-speech.
+- **Canvas Whiteboard**: Draw diagrams, mind maps, and flowcharts. AI-generated Mermaid diagrams render automatically.
+- **Web Search Integration**: Toggle real-time web search to ground AI responses with current data and cited sources.
+- **Task Hub & Scheduler**: AI detects tasks from conversations and schedules daily automated queries.
+- **Local File Browser**: Browse local file system and analyze files from the chat.
+- **Personalized Learning**: Oforo learns user interests, knowledge level, and preferred response style.
+- **Import from ChatGPT**: Import existing ChatGPT conversation history.
+- **Friends & Collaboration**: Add friends, share chat threads, co-edit whiteboards, and message within the platform.
+- **Multi-Language Support**: Responses in 20+ languages including Spanish, French, German, Hindi, and Malayalam.
+- **File & Image Analysis**: Upload PDFs, CSVs, images, and documents for AI analysis.
+
+## Model Tiers
+
+- **Free**: Llama 3.3 70B, Mistral Small (open-source, unlimited)
+- **Mini**: Gemini 2.0 Flash, DeepSeek V3 (fast, capable)
+- **Pro**: GPT-4o Mini, Claude Sonnet 4 (premium)
+- **Max**: GPT-4o, Claude Sonnet 4, full collaboration suite (most powerful)
+
+## Products
+
+- **LADX** (ladx.ai): AI for industrial automation, PLC programming, and manufacturing
+- **SEEKOF** (seekof.cloud): AI tool discovery platform
+- **nxtED** (nxted.ai): Career development and skill guidance AI
+
+## Company
+
+- **Website**: https://oforo.ai
+- **Parent Company**: Wartens
+- **Locations**: Milton Keynes, UK & Bangalore, India
+- **Contact**: https://oforo.ai/contact
+
+## Links
+
+- [Features](https://oforo.ai/features)
+- [Pricing](https://oforo.ai/pricing)
+- [About](https://oforo.ai/about)
+- [API Access](https://oforo.ai/api-access)
+- [Documentation](https://oforo.ai/docs)
+- [Blog](https://oforo.ai/blog)
+- [Careers](https://oforo.ai/careers)
+- [Full Details](https://oforo.ai/llms-full.txt)

@@ -25,6 +25,7 @@ export const chatSchema = z.object({
   modelId: z.string().max(50).optional(),
   searchContext: z.string().max(100000).optional(),
   language: z.string().max(10).optional(),
+  userContext: z.string().max(1000).optional(),
 });
 
 // ── Search validations ──

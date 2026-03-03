@@ -33,6 +33,7 @@ import {
   Users,
   Layout,
   Building2,
+  Download,
 } from "lucide-react";
 import type { Conversation, VoiceThread } from "@/types/chat";
 
@@ -92,6 +93,7 @@ export function Sidebar({
   voiceThreads, onSelectVoiceThread, onDeleteVoiceThread, onRenameVoiceThread, onTogglePinVoiceThread,
   isMax, sidebarTab, onTabChange,
   friends, onOpenFriends, onMessageFriend, onOpenWorkspaces, onOpenMessages,
+  onImport,
 }: {
   conversations: Conversation[]; activeConvo: string | null;
   onSelect: (id: string) => void; onNew: () => void;
@@ -115,6 +117,7 @@ export function Sidebar({
   onMessageFriend: (friend: Friend) => void;
   onOpenWorkspaces: () => void;
   onOpenMessages: () => void;
+  onImport: () => void;
 }) {
   const [profileOpen, setProfileOpen] = useState(false);
   const [productsSubOpen, setProductsSubOpen] = useState(false);
@@ -148,7 +151,7 @@ export function Sidebar({
 
   if (collapsed) {
     return (
-      <aside className="hidden lg:flex flex-col items-center py-3 w-16 flex-shrink-0 h-full"
+      <aside className="hidden md:flex flex-col items-center py-3 w-16 flex-shrink-0 h-full"
         style={{ background: "var(--bg-secondary)", borderRight: "1px solid var(--border-primary)" }}>
         <Link href="/" className="mb-2 p-1 rounded-lg transition-colors hover:bg-opacity-50" style={{ color: "var(--text-secondary)" }}>
           <OforoIcon size={28} />
@@ -177,9 +180,9 @@ export function Sidebar({
 
   return (
     <>
-      {isOpen && <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={onClose} />}
+      {isOpen && <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={onClose} />}
       <aside
-        className={`fixed lg:relative z-50 lg:z-auto top-0 left-0 h-full w-72 flex flex-col transition-transform duration-300 ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
+        className={`fixed md:relative z-50 md:z-auto top-0 left-0 h-full w-72 flex flex-col transition-transform duration-300 ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}
         style={{ background: "var(--bg-secondary)", borderRight: "1px solid var(--border-primary)" }}>
         {/* Header with logo + collapse on right edge */}
         <div className="flex items-center justify-between p-4" style={{ borderBottom: "1px solid var(--border-primary)" }}>
@@ -187,16 +190,22 @@ export function Sidebar({
             <OforoLogo />
           </Link>
           <div className="flex items-center gap-1">
-            <button onClick={onToggleCollapse} className="hidden lg:block p-1.5 rounded-lg transition-colors" style={{ color: "var(--text-tertiary)" }} title="Collapse sidebar">
+            <button onClick={onToggleCollapse} className="hidden md:block p-1.5 rounded-lg transition-colors" style={{ color: "var(--text-tertiary)" }} title="Collapse sidebar">
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <button onClick={onClose} className="lg:hidden p-1" style={{ color: "var(--text-tertiary)" }}><X className="w-5 h-5" /></button>
+            <button onClick={onClose} className="md:hidden p-1" style={{ color: "var(--text-tertiary)" }}><X className="w-5 h-5" /></button>
           </div>
         </div>
-        <div className="p-3">
+        <div className="p-3 space-y-1.5">
           <button onClick={onNew} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium rounded-lg"
             style={{ border: "1px solid var(--border-primary)" }}>
             <Plus className="w-4 h-4" /> New chat
+          </button>
+          <button onClick={onImport} className="w-full flex items-center gap-2 px-3 py-1.5 text-[11px] rounded-lg transition-colors"
+            style={{ color: "var(--text-tertiary)" }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-hover)")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+            <Download className="w-3.5 h-3.5" /> Import from ChatGPT
           </button>
         </div>
 

@@ -11,12 +11,10 @@ import { type Friend } from "@/components/FriendsPanel";
 import {
   Menu,
   CheckSquare,
-  Mic,
-  PenTool,
-  Users,
 } from "lucide-react";
 import type { SearchResult, SearchImage, UploadedFile, Message, Conversation, VoiceThread } from "@/types/chat";
-import { getDefaultModelForTier, type OforoTier } from "@/lib/models";
+import { getDefaultModelForTier, getModelConfig, autoRouteModel, type OforoTier } from "@/lib/models";
+import { loadProfile, learnFromMessage, saveProfile, buildPersonalizationContext } from "@/lib/personalization";
 
 /* ═══════ Extracted components ═══════ */
 import { OforoIcon, OforoLogo } from "@/components/OforoLogo";
@@ -25,6 +23,8 @@ import { Sidebar } from "@/components/chat/ChatSidebar";
 import { MessageBubble, TypingIndicator, SearchingIndicator, StreamingMessage } from "@/components/chat/MessageBubble";
 import { ChatInputBar } from "@/components/chat/ChatInputBar";
 import { WelcomeScreen } from "@/components/chat/WelcomeScreen";
+import { CompareMode } from "@/components/chat/CompareMode";
+import { ImportConversations } from "@/components/chat/ImportConversations";
 
 /* ═══════ Dynamic imports for heavy components ═══════ */
 const CanvasWhiteboard = dynamic(() => import("@/components/CanvasWhiteboard"), { ssr: false });
@@ -65,10 +65,14 @@ export default function Home() {
   });
   const [selectedModel, setSelectedModel] = useState(() => {
     if (typeof window !== "undefined") {
-      return localStorage.getItem("oforo-selected-model") || "gemini-flash";
+      return localStorage.getItem("oforo-selected-model") || "auto";
     }
-    return "gemini-flash";
+    return "auto";
   });
+  const [autoRouteInfo, setAutoRouteInfo] = useState<{ modelName: string; reason: string } | null>(null);
+  const [compareMode, setCompareMode] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [showUpgradeWall, setShowUpgradeWall] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [streamingContent, setStreamingContent] = useState("");
@@ -241,6 +245,15 @@ export default function Home() {
     e.target.value = "";
   }
 
+  /* ── Freemium gate: show upgrade wall for non-logged-in users ── */
+  function gatedAction(action: () => void) {
+    if (!user) {
+      setShowUpgradeWall(true);
+      return;
+    }
+    action();
+  }
+
   /* ── Local file system access via File System Access API ── */
   async function handleBrowseFiles() {
     try {
@@ -345,6 +358,7 @@ export default function Home() {
   function handleModelSelect(id: string) {
     setSelectedModel(id);
     localStorage.setItem("oforo-selected-model", id);
+    if (id !== "auto") setAutoRouteInfo(null);
   }
 
   /* ── Streaming controls ── */
@@ -367,6 +381,16 @@ export default function Home() {
   const sendMessage = useCallback(async (text?: string) => {
     const content = text || input.trim();
     if (!content || isStreaming) return;
+
+    // Freemium gate: non-logged-in users get 3 free messages
+    if (!user) {
+      const freeCount = parseInt(localStorage.getItem("oforo-free-msgs") || "0", 10);
+      if (freeCount >= 3) {
+        setShowUpgradeWall(true);
+        return;
+      }
+      localStorage.setItem("oforo-free-msgs", String(freeCount + 1));
+    }
 
     const userMessage: Message = {
       id: Date.now().toString(), role: "user", content, timestamp: new Date(),
@@ -432,9 +456,27 @@ export default function Home() {
         return { role: m.role, content: msgContent };
       });
 
+      // Auto-route: pick best model for the prompt
+      let effectiveModel = selectedModel;
+      if (selectedModel === "auto") {
+        const route = autoRouteModel(content, selectedTier);
+        effectiveModel = route.modelId;
+        const cfg = getModelConfig(route.modelId);
+        setAutoRouteInfo({ modelName: cfg.name, reason: route.reason });
+      }
+
+      // Personalization: learn from this message and build context
+      let userContext: string | undefined;
+      if (user) {
+        const profile = loadProfile();
+        const updated = learnFromMessage(content, profile);
+        saveProfile(updated);
+        userContext = buildPersonalizationContext(updated) || undefined;
+      }
+
       const chatRes = await fetch("/api/chat", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: apiMessages, modelId: selectedModel, searchContext, language: typeof window !== "undefined" ? localStorage.getItem("oforo-language") || "en" : "en" }),
+        body: JSON.stringify({ messages: apiMessages, modelId: effectiveModel, searchContext, userContext, language: typeof window !== "undefined" ? localStorage.getItem("oforo-language") || "en" : "en" }),
         signal: controller.signal,
       });
 
@@ -469,9 +511,11 @@ export default function Home() {
         }
       }
 
+      const routeInfo = selectedModel === "auto" ? autoRouteInfo : undefined;
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(), role: "assistant", content: fullContent,
-        model: selectedModel,
+        model: effectiveModel,
+        autoRouted: routeInfo || undefined,
         sources: searchResults.length > 0 ? searchResults : undefined,
         images: searchImages.length > 0 ? searchImages : undefined,
         timestamp: new Date(),
@@ -626,57 +670,21 @@ export default function Home() {
         onMessageFriend={(friend) => { setDmActiveFriend(friend); setDirectMessagesOpen(true); setSidebarOpen(false); }}
         onOpenWorkspaces={() => { setSharedWorkspaceOpen(true); setSidebarOpen(false); }}
         onOpenMessages={() => { setDirectMessagesOpen(true); setSidebarOpen(false); }}
+        onImport={() => setImportModalOpen(true)}
       />
 
       <div className="flex-1 flex flex-col h-full min-w-0">
         {/* ═══ TOP BAR ═══ */}
         <header className="flex items-center justify-between px-4 py-3 flex-shrink-0" style={{ borderBottom: "1px solid var(--border-primary)" }}>
           <div className="flex items-center gap-2 relative">
-            <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-1.5" style={{ color: "var(--text-tertiary)" }}><Menu className="w-5 h-5" /></button>
+            <button onClick={() => setSidebarOpen(true)} className="md:hidden p-1.5" style={{ color: "var(--text-tertiary)" }}><Menu className="w-5 h-5" /></button>
             <ModelSelector selected={selectedTier} onSelect={handleTierSelect} />
           </div>
           <div className="flex items-center gap-1">
             {/* Mobile branding — full logo for guests, icon for logged-in */}
-            <Link href="/" className="lg:hidden flex-shrink-0 mr-1">
+            <Link href="/" className="md:hidden flex-shrink-0 mr-1">
               {user ? <OforoIcon size={22} /> : <OforoLogo />}
             </Link>
-            {/* Feature buttons — visible for everyone, gated on click */}
-            <button onClick={() => { if (!user) { router.push("/auth"); return; } setVoiceMode(true); setActiveVoiceThreadId(null); }}
-              className="p-2 rounded-lg transition-colors hidden sm:flex items-center gap-1 text-xs group relative"
-              style={{ color: "var(--text-tertiary)" }}>
-              <Mic className="w-3.5 h-3.5" />
-              <span className="absolute top-full mt-1 left-1/2 -translate-x-1/2 px-2 py-1 rounded text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50"
-                style={{ background: "var(--bg-elevated)", color: "var(--text-primary)", border: "1px solid var(--border-hover)" }}>
-                Voice Mode — Talk to AI
-              </span>
-            </button>
-            <button onClick={() => { if (!user) { router.push("/auth"); return; } setCanvasOpen(true); }}
-              className="p-2 rounded-lg transition-colors hidden sm:flex items-center gap-1 text-xs group relative"
-              style={{ color: "var(--text-tertiary)" }}>
-              <PenTool className="w-3.5 h-3.5" />
-              <span className="absolute top-full mt-1 left-1/2 -translate-x-1/2 px-2 py-1 rounded text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50"
-                style={{ background: "var(--bg-elevated)", color: "var(--text-primary)", border: "1px solid var(--border-hover)" }}>
-                Canvas — Draw & Diagram
-              </span>
-            </button>
-            <button onClick={() => { if (!user) { router.push("/auth"); return; } setTaskHubOpen(true); }}
-              className="p-2 rounded-lg transition-colors hidden sm:flex items-center gap-1 text-xs group relative"
-              style={{ color: "var(--text-tertiary)" }}>
-              <CheckSquare className="w-3.5 h-3.5" />
-              <span className="absolute top-full mt-1 left-1/2 -translate-x-1/2 px-2 py-1 rounded text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50"
-                style={{ background: "var(--bg-elevated)", color: "var(--text-primary)", border: "1px solid var(--border-hover)" }}>
-                Task Hub — Manage Todos
-              </span>
-            </button>
-            <button onClick={() => { if (!user) { router.push("/auth"); return; } setFriendsPanelOpen(true); }}
-              className="p-2 rounded-lg transition-colors hidden sm:flex items-center gap-1 text-xs group relative"
-              style={{ color: "var(--text-tertiary)" }}>
-              <Users className="w-3.5 h-3.5" />
-              <span className="absolute top-full mt-1 left-1/2 -translate-x-1/2 px-2 py-1 rounded text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50"
-                style={{ background: "var(--bg-elevated)", color: "var(--text-primary)", border: "1px solid var(--border-hover)" }}>
-                Friends — Connect & Chat
-              </span>
-            </button>
             {/* Product links for non-logged-in users */}
             {!user && (
               <>
@@ -715,7 +723,9 @@ export default function Home() {
         </header>
 
         {/* ═══ CONTENT ═══ */}
-        {voiceMode ? (
+        {compareMode ? (
+          <CompareMode tier={selectedTier} onClose={() => setCompareMode(false)} />
+        ) : voiceMode ? (
           <VoiceChat
             inline
             onClose={() => { setVoiceMode(false); setActiveVoiceThreadId(null); }}
@@ -778,6 +788,11 @@ export default function Home() {
             selectedTier={selectedTier}
             selectedModel={selectedModel}
             onSelectModel={handleModelSelect}
+            autoRouteInfo={autoRouteInfo}
+            onCompare={() => gatedAction(() => setCompareMode(true))}
+            onBrowseFiles={() => gatedAction(handleBrowseFiles)}
+            onVoiceMode={() => gatedAction(() => { setVoiceMode(true); setActiveVoiceThreadId(null); })}
+            onCanvas={() => gatedAction(() => setCanvasOpen(true))}
           />
         ) : (
           <>
@@ -805,18 +820,20 @@ export default function Home() {
               webSearchEnabled={webSearchEnabled}
               setWebSearchEnabled={setWebSearchEnabled}
               canAccessCanvas={!user || canAccessFeature("canvas")}
-              onOpenCanvas={() => setCanvasOpen(true)}
+              onOpenCanvas={() => gatedAction(() => setCanvasOpen(true))}
               canAccessShareThread={!user || canAccessFeature("share_thread")}
               activeConvo={activeConvo}
-              onOpenFriendsPanel={() => setFriendsPanelOpen(true)}
+              onOpenFriendsPanel={() => gatedAction(() => setFriendsPanelOpen(true))}
               canAccessBrowseFiles={!user || canAccessFeature("browse_files")}
-              onBrowseFiles={handleBrowseFiles}
+              onBrowseFiles={() => gatedAction(handleBrowseFiles)}
               canAccessVoice={!user || canAccessFeature("voice")}
-              onOpenVoiceMode={() => { setVoiceMode(true); setActiveVoiceThreadId(null); }}
+              onOpenVoiceMode={() => gatedAction(() => { setVoiceMode(true); setActiveVoiceThreadId(null); })}
               onStopStream={handleStopStream}
+              onCompare={() => gatedAction(() => setCompareMode(true))}
               selectedTier={selectedTier}
               selectedModel={selectedModel}
               onSelectModel={handleModelSelect}
+              autoRouteInfo={autoRouteInfo}
             />
           </>
         )}
@@ -1011,6 +1028,50 @@ export default function Home() {
           return result;
         }}
       />
+
+      {/* ═══ IMPORT CONVERSATIONS MODAL ═══ */}
+      {importModalOpen && (
+        <ImportConversations
+          onImport={(imported) => {
+            setConversations((prev) => [...imported, ...prev]);
+          }}
+          onClose={() => setImportModalOpen(false)}
+        />
+      )}
+
+      {/* ═══ FREEMIUM UPGRADE WALL ═══ */}
+      {showUpgradeWall && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}>
+          <div className="w-full max-w-sm rounded-2xl p-6 animate-fade-in text-center"
+            style={{ background: "var(--bg-primary)", border: "1px solid var(--border-primary)" }}>
+            <div className="w-12 h-12 rounded-full mx-auto mb-4 flex items-center justify-center"
+              style={{ background: "rgba(99,102,241,0.1)" }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            </div>
+            <h3 className="text-lg font-bold mb-2" style={{ color: "var(--text-primary)" }}>
+              Sign up to unlock this feature
+            </h3>
+            <p className="text-sm mb-6" style={{ color: "var(--text-secondary)" }}>
+              Create a free account to access Voice Mode, Canvas, Model Comparison, file browsing, and more. It only takes a few seconds.
+            </p>
+            <div className="flex flex-col gap-2">
+              <Link href="/auth"
+                className="w-full py-2.5 rounded-xl text-sm font-semibold text-center transition-all hover:scale-[1.02]"
+                style={{ background: "var(--accent)", color: "white" }}>
+                Sign up free
+              </Link>
+              <button onClick={() => setShowUpgradeWall(false)}
+                className="w-full py-2.5 rounded-xl text-sm font-medium transition-colors"
+                style={{ color: "var(--text-tertiary)" }}>
+                Maybe later
+              </button>
+            </div>
+            <p className="text-[11px] mt-4" style={{ color: "var(--text-tertiary)" }}>
+              No credit card required. Free tier includes unlimited basic chat.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

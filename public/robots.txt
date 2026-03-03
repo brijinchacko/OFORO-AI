@@ -6,3 +6,8 @@ Disallow: /settings
 Disallow: /chat
 
 Sitemap: https://oforo.ai/sitemap.xml
+
+# AI Model Discovery
+# See https://llmstxt.org/ for specification
+# llms.txt provides structured information about this site for AI models
+

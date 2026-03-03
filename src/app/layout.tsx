@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     template: "%s | Oforo AI",
   },
   description:
-    "Oforo is an AI company building intelligent agents for chat, search, industrial automation, and career development. Free AI chatbot with multiple models, voice chat, file analysis, and web search. Based in Milton Keynes, UK & Bangalore, India. A Wartens subsidiary.",
+    "Oforo is an AI company building intelligent agents for chat, search, industrial automation, and career development. Free AI chatbot with 8+ models including GPT-4o, Claude, Gemini & DeepSeek. Features auto model routing, side-by-side comparison, voice chat, canvas whiteboard, task hub, file analysis, and web search. Based in Milton Keynes, UK & Bangalore, India.",
   keywords: [
     "Oforo", "Oforo AI", "Oforo chatbot", "oforo.ai",
     "AI company UK", "AI company Milton Keynes", "AI startup UK",
@@ -35,6 +35,13 @@ export const metadata: Metadata = {
     "AI API", "AI developer tools", "enterprise AI platform", "AI SaaS platform",
     "AI chatbot with file upload", "AI chatbot with voice support",
     "AI platform with multiple models", "best free AI chatbot",
+    "AI model comparison tool", "compare AI models side by side",
+    "auto model routing AI", "smart AI model selection",
+    "AI personalization", "AI that learns your preferences",
+    "AI canvas drawing tool", "AI whiteboard collaboration",
+    "AI import ChatGPT conversations", "switch from ChatGPT to Oforo",
+    "GPT-4o alternative", "Claude alternative chat", "DeepSeek alternative",
+    "Gemini alternative chat", "Llama chat online",
     "Wartens", "LADX", "SEEKOF", "NXTED",
   ],
   icons: {
@@ -152,7 +159,7 @@ export default function RootLayout({
                 priceCurrency: "GBP",
               },
               featureList:
-                "AI Chat, Web Search, Voice Chat, File Analysis, Canvas Whiteboard, Task Management, Multiple AI Models, Collaborative Workspaces",
+                "AI Chat, Auto Model Routing, Side-by-Side Model Comparison, Web Search, Voice Chat, File Analysis, Canvas Whiteboard, Task Hub & Scheduler, Local File Browser, Personalized Learning, ChatGPT Import, Multiple AI Models (GPT-4o Claude Gemini DeepSeek Llama Mistral), Friends & Collaboration, Multi-Language Support, Direct Messaging",
             }),
           }}
         />

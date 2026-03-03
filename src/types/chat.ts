@@ -33,6 +33,7 @@ export interface Message {
   role: "user" | "assistant";
   content: string;
   model?: string;
+  autoRouted?: { modelName: string; reason: string };
   sources?: SearchResult[];
   images?: SearchImage[];
   timestamp: Date;

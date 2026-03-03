@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { messages, modelId, searchContext, language } = parsed.data;
+    const { messages, modelId, searchContext, language, userContext } = parsed.data;
 
     const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
@@ -63,6 +63,9 @@ Always confirm task creation and output the TODO format so it gets picked up by 
       };
       const langName = langNames[language] || language;
       systemContent += `\n\nIMPORTANT: The user has selected ${langName} as their preferred language. You MUST respond entirely in ${langName}. Always reply in ${langName} regardless of the language the user types in.`;
+    }
+    if (userContext) {
+      systemContent += `\n\nUser personalization context: ${userContext}`;
     }
     if (searchContext) {
       systemContent += `\n\n--- WEB SEARCH RESULTS ---\n${searchContext}\n--- END SEARCH RESULTS ---\nUse these sources to provide an accurate, up-to-date answer. Cite sources using [1], [2], etc. where relevant.`;

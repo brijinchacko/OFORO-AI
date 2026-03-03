@@ -9,6 +9,10 @@ import {
   Upload,
   File,
   Square,
+  Columns,
+  FolderOpen,
+  Mic,
+  PenTool,
 } from "lucide-react";
 import type { UploadedFile } from "@/types/chat";
 import { ModelChips } from "@/components/chat/ModelChips";
@@ -38,9 +42,11 @@ export function ChatInputBar({
   canAccessVoice,
   onOpenVoiceMode,
   onStopStream,
+  onCompare,
   selectedTier,
   selectedModel,
   onSelectModel,
+  autoRouteInfo,
 }: {
   input: string;
   setInput: (v: string) => void;
@@ -65,8 +71,10 @@ export function ChatInputBar({
   canAccessVoice: boolean;
   onOpenVoiceMode: () => void;
   onStopStream: () => void;
+  onCompare: () => void;
   selectedTier: OforoTier;
   selectedModel: string;
+  autoRouteInfo?: { modelName: string; reason: string } | null;
   onSelectModel: (modelId: string) => void;
 }) {
   return (
@@ -99,6 +107,7 @@ export function ChatInputBar({
           </div>
           <div className="flex items-center justify-between px-3 pb-3">
             <div className="flex items-center gap-0.5">
+              <ModelChips tier={selectedTier} selectedModel={selectedModel} onSelectModel={onSelectModel} autoRouteInfo={autoRouteInfo} />
               <button onClick={() => setWebSearchEnabled(!webSearchEnabled)}
                 className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all"
                 style={{
@@ -109,14 +118,31 @@ export function ChatInputBar({
                 <Globe className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Search</span>
               </button>
-              <ModelChips tier={selectedTier} selectedModel={selectedModel} onSelectModel={onSelectModel} />
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-0.5">
               <input ref={chatFileInputRef} type="file" className="hidden" onChange={onFileChange}
                 accept=".txt,.csv,.json,.md,.pdf,.docx,.xlsx,.pptx,.png,.jpg,.jpeg,.gif,.webp" />
               <button onClick={() => chatFileInputRef.current?.click()} className="p-2 rounded-lg transition-colors" style={{ color: "var(--text-tertiary)" }}
                 title="Attach file">
                 <Paperclip className="w-4 h-4" />
+              </button>
+              <button onClick={onBrowseFiles} className="p-2 rounded-lg transition-colors" style={{ color: "var(--text-tertiary)" }}
+                title="Browse files">
+                <FolderOpen className="w-4 h-4" />
+              </button>
+              <button onClick={onOpenCanvas} className="p-2 rounded-lg transition-colors" style={{ color: "var(--text-tertiary)" }}
+                title="Canvas">
+                <PenTool className="w-4 h-4" />
+              </button>
+              <button onClick={onOpenVoiceMode} className="p-2 rounded-lg transition-colors" style={{ color: "var(--text-tertiary)" }}
+                title="Voice mode">
+                <Mic className="w-4 h-4" />
+              </button>
+              <button onClick={onCompare}
+                className="p-2 rounded-lg transition-all"
+                style={{ background: "rgba(139,92,246,0.1)", color: "#8b5cf6" }}
+                title="Compare models side-by-side">
+                <Columns className="w-4 h-4" />
               </button>
               {isStreaming ? (
                 <button onClick={onStopStream}
