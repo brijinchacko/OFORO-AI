@@ -1,6 +1,5 @@
 'use client';
 
-import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft, Code } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
@@ -107,12 +106,6 @@ const endpoints = [
     ),
   },
 ];
-
-export const metadata: Metadata = {
-  title: "API Reference — Oforo AI Developer Docs",
-  description: "Complete API reference documentation for Oforo AI. Learn about endpoints, models, embeddings, and integration examples.",
-  keywords: ["AI API reference", "Oforo API docs", "AI endpoints"],
-};
 
 export default function ApiReferencePage() {
   useTheme();

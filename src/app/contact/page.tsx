@@ -1,18 +1,12 @@
 'use client';
 
-import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft, Mail, MapPin, Phone } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 const year = new Date().getFullYear();
-
-export const metadata: Metadata = {
-  title: "Contact Oforo AI",
-  description: "Get in touch with Oforo AI. Contact us for support, partnerships, or any inquiries about our AI platform.",
-  keywords: ["contact Oforo", "AI company contact", "Oforo support"],
-};
 
 export default function ContactPage() {
   useTheme();
@@ -22,6 +16,7 @@ export default function ContactPage() {
     subject: '',
     message: '',
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -31,12 +26,27 @@ export default function ContactPage() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission
-    console.log('Form submitted:', formData);
-    alert('Thank you for your message! We\'ll get back to you soon.');
-    setFormData({ name: '', email: '', subject: '', message: '' });
+    setIsSubmitting(true);
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || 'Failed to send message. Please try again.');
+        return;
+      }
+      toast.success("Thank you for your message! We'll get back to you soon.");
+      setFormData({ name: '', email: '', subject: '', message: '' });
+    } catch {
+      toast.error('Network error. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -260,6 +270,7 @@ export default function ContactPage() {
 
                 <button
                   type="submit"
+                  disabled={isSubmitting}
                   style={{
                     width: '100%',
                     padding: '14px 20px',
@@ -269,17 +280,18 @@ export default function ContactPage() {
                     borderRadius: '8px',
                     fontSize: '15px',
                     fontWeight: '600',
-                    cursor: 'pointer',
+                    cursor: isSubmitting ? 'not-allowed' : 'pointer',
                     transition: 'opacity 0.3s ease',
+                    opacity: isSubmitting ? 0.7 : 1,
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.opacity = '0.9';
+                    if (!isSubmitting) e.currentTarget.style.opacity = '0.9';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.opacity = '1';
+                    if (!isSubmitting) e.currentTarget.style.opacity = '1';
                   }}
                 >
-                  Send Message
+                  {isSubmitting ? 'Sending...' : 'Send Message'}
                 </button>
               </form>
             </div>

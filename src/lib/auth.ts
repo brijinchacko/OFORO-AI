@@ -1,8 +1,13 @@
 import { SignJWT, jwtVerify } from "jose";
 import { userOps } from "./db";
 
+// ── JWT Secret — MUST be set in environment ──
+const jwtSecretValue = process.env.JWT_SECRET;
+if (!jwtSecretValue && process.env.NODE_ENV === "production") {
+  throw new Error("JWT_SECRET environment variable is required in production");
+}
 const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "oforo-jwt-secret-change-me-in-production-2026"
+  jwtSecretValue || "dev-only-secret-not-for-production"
 );
 
 // ── Password hashing (Web Crypto, no deps) ──
@@ -26,6 +31,20 @@ async function verifyPassword(password: string, stored: string): Promise<boolean
   return computedHex === hashHex;
 }
 
+// ── Password validation ──
+export function validatePassword(password: string): { valid: boolean; error?: string } {
+  if (password.length < 8) {
+    return { valid: false, error: "Password must be at least 8 characters" };
+  }
+  if (password.length > 128) {
+    return { valid: false, error: "Password must be less than 128 characters" };
+  }
+  if (!/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) {
+    return { valid: false, error: "Password must contain both letters and numbers" };
+  }
+  return { valid: true };
+}
+
 // ── JWT ──
 export async function createToken(payload: { userId: string; email: string; name: string }): Promise<string> {
   return new SignJWT(payload)
@@ -44,7 +63,7 @@ export async function verifyToken(token: string) {
   }
 }
 
-// ── User creation (with password — called after OTP verification on signup) ──
+// ── User creation (called after OTP verification on signup) ──
 export async function createUser(
   email: string,
   password: string,
@@ -52,7 +71,13 @@ export async function createUser(
 ): Promise<{ user: { id: string; email: string; name: string; createdAt: string }; token: string } | { error: string }> {
   const normalizedEmail = email.toLowerCase().trim();
 
-  const existing = userOps.getByEmail(normalizedEmail);
+  // Validate password strength
+  const passwordCheck = validatePassword(password);
+  if (!passwordCheck.valid) {
+    return { error: passwordCheck.error! };
+  }
+
+  const existing = await userOps.getByEmail(normalizedEmail);
   if (existing) {
     return { error: "An account with this email already exists" };
   }
@@ -61,39 +86,18 @@ export async function createUser(
   const id = `user_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   const createdAt = new Date().toISOString();
 
-  userOps.create({ id, email: normalizedEmail, name: name.trim(), password_hash: passwordHash, created_at: createdAt, email_verified: 1 });
+  await userOps.create({ id, email: normalizedEmail, name: name.trim(), password_hash: passwordHash, created_at: createdAt, email_verified: 1 });
 
   const token = await createToken({ userId: id, email: normalizedEmail, name: name.trim() });
   return { user: { id, email: normalizedEmail, name: name.trim(), createdAt }, token };
 }
 
-// ── Login with password ──
-export async function authenticateUser(
-  email: string,
-  password: string
-): Promise<{ user: { id: string; email: string; name: string }; token: string } | { error: string }> {
-  const normalizedEmail = email.toLowerCase().trim();
-  const user = userOps.getByEmail(normalizedEmail);
-
-  if (!user || !user.password_hash) {
-    return { error: "Invalid email or password" };
-  }
-
-  const valid = await verifyPassword(password, user.password_hash);
-  if (!valid) {
-    return { error: "Invalid email or password" };
-  }
-
-  const token = await createToken({ userId: user.id, email: user.email, name: user.name });
-  return { user: { id: user.id, email: user.email, name: user.name }, token };
-}
-
 // ── Get user by email (for OTP flow) ──
-export function getUserByEmail(email: string) {
+export async function getUserByEmail(email: string) {
   return userOps.getByEmail(email.toLowerCase().trim());
 }
 
 // ── Get user by ID ──
-export function getUserById(id: string) {
+export async function getUserById(id: string) {
   return userOps.getById(id);
 }

@@ -1,5 +1,3 @@
-"use client";
-
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
@@ -76,6 +74,15 @@ export default function SeekofPage() {
 
   return (
     <div className="pt-24">
+      {/* CTA Banner */}
+      <div className="sticky top-16 z-40 w-full py-3 px-4 text-center text-sm font-medium"
+        style={{ background: "linear-gradient(135deg, var(--accent), #8b5cf6)", color: "#fff" }}>
+        Experience the full SEEKOF platform →{" "}
+        <a href="https://seekof.cloud/" target="_blank" rel="noopener noreferrer" className="underline font-bold">
+          Visit seekof.cloud
+        </a>
+      </div>
+
       {/* Hero */}
       <section className="relative py-20 px-4 overflow-hidden">
         <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[150px]" />
@@ -98,10 +105,10 @@ export default function SeekofPage() {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
-              href="https://seekof.ai"
+              href="https://seekof.cloud/"
               className="group flex items-center gap-2 px-8 py-3.5 bg-purple-600 text-white font-medium rounded-xl hover:bg-purple-500 transition-all"
             >
-              Visit seekof.ai
+              Visit seekof.cloud
               <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
             </Link>
             <Link
@@ -216,10 +223,10 @@ export default function SeekofPage() {
             50,000+ AI tools. One intelligent search engine. Free to explore.
           </p>
           <Link
-            href="https://seekof.ai"
+            href="https://seekof.cloud/"
             className="inline-flex items-center gap-2 px-8 py-3.5 bg-white text-black font-medium rounded-xl hover:bg-gray-100 transition-all"
           >
-            Start exploring at seekof.ai
+            Start exploring at seekof.cloud
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>

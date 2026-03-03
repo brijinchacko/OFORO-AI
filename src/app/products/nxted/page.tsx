@@ -1,5 +1,3 @@
-"use client";
-
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
@@ -93,6 +91,15 @@ export default function NxtedPage() {
 
   return (
     <div className="pt-24">
+      {/* CTA Banner */}
+      <div className="sticky top-16 z-40 w-full py-3 px-4 text-center text-sm font-medium"
+        style={{ background: "linear-gradient(135deg, var(--accent), #8b5cf6)", color: "#fff" }}>
+        Experience the full NXTED platform →{" "}
+        <a href="https://www.nxted.ai/" target="_blank" rel="noopener noreferrer" className="underline font-bold">
+          Visit www.nxted.ai
+        </a>
+      </div>
+
       {/* Hero */}
       <section className="relative py-20 px-4 overflow-hidden">
         <div className="absolute bottom-0 left-1/3 w-[500px] h-[500px] bg-cyan-600/10 rounded-full blur-[150px]" />
@@ -113,10 +120,10 @@ export default function NxtedPage() {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
-              href="https://nxted.ai"
+              href="https://www.nxted.ai/"
               className="group flex items-center gap-2 px-8 py-3.5 bg-cyan-600 text-white font-medium rounded-xl hover:bg-cyan-500 transition-all"
             >
-              Visit nxted.ai
+              Visit www.nxted.ai
               <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
             </Link>
             <Link
@@ -232,10 +239,10 @@ export default function NxtedPage() {
             Free skill assessment. Personalised learning path. Your career, accelerated.
           </p>
           <Link
-            href="https://nxted.ai"
+            href="https://www.nxted.ai/"
             className="inline-flex items-center gap-2 px-8 py-3.5 bg-white text-black font-medium rounded-xl hover:bg-gray-100 transition-all"
           >
-            Get started at nxted.ai
+            Get started at www.nxted.ai
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>

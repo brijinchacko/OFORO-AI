@@ -60,12 +60,27 @@ const featurePlanMap: Record<FeatureKey, PlanTier> = {
 
 // Which plan is needed for each model
 const modelPlanMap: Record<string, PlanTier> = {
+  // Free tier (no login)
+  "gemini-flash": "free",
+  "deepseek-v3": "free",
+  // Mini tier (free plan — signed in)
+  "gpt-4o-mini": "free",
+  "llama-3.3-70b": "free",
+  // Pro tier (paid)
+  "gpt-4o": "pro",
+  "claude-sonnet": "pro",
+  "grok-3": "pro",
+  "o3": "pro",
+  // MAX tier (premium)
+  "claude-opus": "max",
+  // Legacy IDs
   "oforo-general": "free",
   "oforo-pro": "pro",
   "oforo-max": "max",
-  "ladx-agent": "max",
-  "seekof-agent": "max",
-  "nxted-agent": "max",
+  // Product agents
+  "ladx-agent": "free",
+  "seekof-agent": "free",
+  "nxted-agent": "free",
 };
 
 // Valid coupon codes

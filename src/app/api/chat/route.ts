@@ -1,15 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getModelConfig } from "@/lib/models";
+import { chatSchema } from "@/lib/validations";
 
 export const runtime = "edge";
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages, modelId, searchContext, language } = await req.json();
+    const body = await req.json();
 
-    if (!messages || !Array.isArray(messages)) {
-      return NextResponse.json({ error: "Messages array is required" }, { status: 400 });
+    // Zod validation
+    const parsed = chatSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.issues[0]?.message || "Invalid input" },
+        { status: 400 }
+      );
     }
+
+    const { messages, modelId, searchContext, language } = parsed.data;
 
     const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
@@ -20,6 +28,16 @@ export async function POST(req: NextRequest) {
 
     // Build system prompt, optionally with search context and language
     let systemContent = config.systemPrompt;
+
+    // Consistent response formatting
+    systemContent += `\n\nResponse formatting guidelines:
+- Use clear, concise language. Avoid unnecessary filler.
+- Use markdown: **bold** for emphasis, \`code\` for technical terms, code blocks with language tags for code.
+- Use headings (##, ###) to organize long responses.
+- Use bullet points or numbered lists for multiple items.
+- Keep paragraphs short (2-4 sentences max).
+- When providing code, always specify the programming language after the triple backticks.
+- Be direct and helpful. Start with the answer, then explain.`;
 
     // Add task/todo awareness for ALL models so AI creates actionable items
     systemContent += `\n\nYou have a built-in task/todo tracking feature. When the user asks you to create tasks, reminders, schedules, or to-do items, you MUST format them using this exact pattern so they are automatically detected and added to the task hub:

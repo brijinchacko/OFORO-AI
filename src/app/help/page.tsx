@@ -1,6 +1,5 @@
 "use client";
 
-import type { Metadata } from "next";
 import { useState } from "react";
 import Link from "next/link";
 import { useTheme } from "@/components/ThemeProvider";
@@ -42,12 +41,6 @@ const faqs: FAQ[] = [
 ];
 
 const categories = Array.from(new Set(faqs.map((f) => f.category)));
-
-export const metadata: Metadata = {
-  title: "Help Centre — Oforo AI Support",
-  description: "Get help with Oforo AI. Find answers to frequently asked questions about features, accounts, billing, privacy, and more.",
-  keywords: ["AI help", "Oforo support", "AI chatbot help"],
-};
 
 export default function HelpPage() {
   const { theme } = useTheme();

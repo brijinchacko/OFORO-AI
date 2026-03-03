@@ -2,14 +2,9 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Menu, X, ChevronDown, Sparkles, Sun, Moon } from "lucide-react";
+import { Menu, X, ChevronDown, ArrowUpRight } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
-
-const products = [
-  { name: "LADX AI", description: "PLC Programming Agent", href: "/products/ladx", icon: "⚡" },
-  { name: "SEEKOF AI", description: "AI Discovery Marketplace", href: "/products/seekof", icon: "🔍" },
-  { name: "NXTED AI", description: "Career Development Agent", href: "/products/nxted", icon: "🎯" },
-];
+import { PRODUCTS } from "@/lib/constants";
 
 function OforoNavLogo() {
   const { theme } = useTheme();
@@ -19,7 +14,7 @@ function OforoNavLogo() {
 }
 
 export default function Navbar() {
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [productsOpen, setProductsOpen] = useState(false);
@@ -55,14 +50,21 @@ export default function Navbar() {
                 <div className="absolute top-full left-0 mt-1 w-72 rounded-xl shadow-2xl overflow-hidden animate-fade-in"
                   style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-hover)" }}>
                   <div className="p-2">
-                    {products.map((p) => (
-                      <Link key={p.name} href={p.href} className="flex items-start gap-3 p-3 rounded-lg transition-colors">
-                        <span className="text-xl">{p.icon}</span>
-                        <div>
-                          <div className="text-sm font-medium">{p.name}</div>
-                          <div className="text-xs" style={{ color: "var(--text-tertiary)" }}>{p.description}</div>
-                        </div>
-                      </Link>
+                    {PRODUCTS.map((p) => (
+                      <div key={p.name} className="flex items-center gap-2">
+                        <Link href={p.route} className="flex-1 flex items-start gap-3 p-3 rounded-lg transition-colors">
+                          <span className="text-xl">{p.icon}</span>
+                          <div>
+                            <div className="text-sm font-medium">{p.name}</div>
+                            <div className="text-xs" style={{ color: "var(--text-tertiary)" }}>{p.description}</div>
+                          </div>
+                        </Link>
+                        <a href={p.url} target="_blank" rel="noopener noreferrer"
+                          className="flex items-center gap-1 px-2 py-1 text-[11px] rounded-md transition-colors whitespace-nowrap"
+                          style={{ color: "var(--text-tertiary)" }}>
+                          Visit <ArrowUpRight className="w-3 h-3" />
+                        </a>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -73,12 +75,9 @@ export default function Navbar() {
           </div>
 
           <div className="hidden md:flex items-center gap-3">
-            <button onClick={toggleTheme} className="p-2 rounded-lg transition-colors" style={{ color: "var(--text-tertiary)" }}>
-              {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-            </button>
             <Link href="/" className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg"
               style={{ background: "var(--text-primary)", color: "var(--bg-primary)" }}>
-              <Sparkles className="w-3.5 h-3.5" /> Try Oforo AI
+              Try Oforo AI
             </Link>
           </div>
 
@@ -91,21 +90,25 @@ export default function Navbar() {
       {mobileOpen && (
         <div className="md:hidden animate-fade-in" style={{ background: "var(--bg-elevated)", borderTop: "1px solid var(--border-primary)" }}>
           <div className="px-4 py-4 space-y-1">
-            {products.map((p) => (
-              <Link key={p.name} href={p.href} className="flex items-center gap-3 px-3 py-3 rounded-lg" onClick={() => setMobileOpen(false)}>
-                <span>{p.icon}</span>
-                <div>
-                  <div className="text-sm font-medium">{p.name}</div>
-                  <div className="text-xs" style={{ color: "var(--text-tertiary)" }}>{p.description}</div>
-                </div>
-              </Link>
+            {PRODUCTS.map((p) => (
+              <div key={p.name} className="flex items-center gap-2">
+                <Link href={p.route} className="flex-1 flex items-center gap-3 px-3 py-3 rounded-lg" onClick={() => setMobileOpen(false)}>
+                  <span>{p.icon}</span>
+                  <div>
+                    <div className="text-sm font-medium">{p.name}</div>
+                    <div className="text-xs" style={{ color: "var(--text-tertiary)" }}>{p.description}</div>
+                  </div>
+                </Link>
+                <a href={p.url} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-1 px-2 py-1 text-[11px] rounded-md transition-colors whitespace-nowrap"
+                  style={{ color: "var(--text-tertiary)" }}>
+                  Visit <ArrowUpRight className="w-3 h-3" />
+                </a>
+              </div>
             ))}
             <Link href="/pricing" className="block px-3 py-2 text-sm" style={{ color: "var(--text-secondary)" }} onClick={() => setMobileOpen(false)}>Pricing</Link>
             <Link href="/about" className="block px-3 py-2 text-sm" style={{ color: "var(--text-secondary)" }} onClick={() => setMobileOpen(false)}>About</Link>
             <div className="flex items-center gap-3 pt-2">
-              <button onClick={toggleTheme} className="p-2 rounded-lg" style={{ color: "var(--text-tertiary)" }}>
-                {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-              </button>
               <Link href="/" className="flex-1 text-center px-4 py-2.5 text-sm font-medium rounded-lg"
                 style={{ background: "var(--text-primary)", color: "var(--bg-primary)" }} onClick={() => setMobileOpen(false)}>
                 Try Oforo AI

@@ -1,6 +1,5 @@
 "use client";
 
-import type { Metadata } from "next";
 import Link from "next/link";
 import {
   MapPin,
@@ -14,12 +13,6 @@ import {
   Building2,
   ExternalLink,
 } from "lucide-react";
-
-export const metadata: Metadata = {
-  title: "About Oforo AI — AI Company in Milton Keynes & Bangalore",
-  description: "Learn about Oforo AI, an artificial intelligence company building specialized AI agents. Based in Milton Keynes, UK & Bangalore, India. A Wartens subsidiary.",
-  keywords: ["AI company UK", "about Oforo", "AI startup Milton Keynes", "Wartens subsidiary", "AI company Bangalore"],
-};
 
 export default function AboutPage() {
   const values = [

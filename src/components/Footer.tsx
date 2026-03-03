@@ -17,9 +17,9 @@ const footerLinks = {
     { name: "Contact", href: "/contact" },
   ],
   Resources: [
-    { name: "Documentation", href: "https://docs.oforo.com" },
-    { name: "API Reference", href: "https://api.oforo.com" },
-    { name: "Status", href: "https://status.oforo.com" },
+    { name: "Documentation", href: "/docs" },
+    { name: "API Reference", href: "/api-reference" },
+    { name: "Status", href: "/status" },
     { name: "Changelog", href: "/changelog" },
   ],
   Legal: [

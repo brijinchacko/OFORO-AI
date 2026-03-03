@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   try {
+    // Auth is handled by middleware; user info available in headers if needed
+    // const userId = req.headers.get("x-user-id");
+    // const userEmail = req.headers.get("x-user-email");
+
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
 

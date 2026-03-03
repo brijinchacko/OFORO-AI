@@ -1,6 +1,5 @@
 'use client';
 
-import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft, Code, Zap, Check } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
@@ -48,12 +47,6 @@ const pricingTiers = [
     features: ['REST API', 'WebSocket', 'SDK Access', '24/7 Priority Support', 'SLA', 'Dedicated Account Manager'],
   },
 ];
-
-export const metadata: Metadata = {
-  title: "API Access — Integrate Oforo AI",
-  description: "Get started with Oforo AI APIs. REST API, WebSocket, and SDK access for developers building with Oforo AI.",
-  keywords: ["AI API", "Oforo API", "AI developer tools", "AI integration"],
-};
 
 export default function ApiAccessPage() {
   useTheme();

@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import AuthProvider from "@/components/AuthProvider";
 import PlanProvider from "@/components/PlanProvider";
 import { UpgradePrompt } from "@/components/PlanProvider";
 import CookieConsent from "@/components/CookieConsent";
+import { Toaster } from "@/components/ui/Toast";
+
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
+const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono", display: "swap" });
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://oforo.ai"),
@@ -86,7 +91,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+    <html lang="en" className={`dark ${inter.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
       <head>
         <script
           type="application/ld+json"
@@ -159,6 +164,7 @@ export default function RootLayout({
               {children}
               <UpgradePrompt />
               <CookieConsent />
+              <Toaster />
             </PlanProvider>
           </AuthProvider>
         </ThemeProvider>

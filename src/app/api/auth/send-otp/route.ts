@@ -1,39 +1,43 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateOTP, storeOTP, sendOTPEmail, cleanupExpiredOTPs } from "@/lib/otp";
 import { getUserByEmail } from "@/lib/auth";
+import { sendOtpSchema } from "@/lib/validations";
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, type } = await req.json();
+    const body = await req.json();
 
-    if (!email || !type || !["signup", "login"].includes(type)) {
-      return NextResponse.json({ error: "Email and type (signup/login) are required" }, { status: 400 });
+    // Zod validation
+    const parsed = sendOtpSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.issues[0]?.message || "Invalid input" },
+        { status: 400 }
+      );
     }
 
+    const { email, type } = parsed.data;
     const normalizedEmail = email.toLowerCase().trim();
 
-    // For signup: make sure user doesn't already exist
-    if (type === "signup") {
-      const existing = getUserByEmail(normalizedEmail);
-      if (existing) {
-        return NextResponse.json({ error: "An account with this email already exists. Please sign in instead." }, { status: 409 });
-      }
+    // Check user existence (but don't reveal it to prevent account enumeration)
+    const existing = await getUserByEmail(normalizedEmail);
+
+    if (type === "signup" && existing) {
+      // Don't reveal that account exists — return same success message
+      return NextResponse.json({ success: true, message: "If this email is eligible, a verification code has been sent." });
     }
 
-    // For login: make sure user exists
-    if (type === "login") {
-      const existing = getUserByEmail(normalizedEmail);
-      if (!existing) {
-        return NextResponse.json({ error: "No account found with this email. Please sign up first." }, { status: 404 });
-      }
+    if (type === "login" && !existing) {
+      // Don't reveal that account doesn't exist — return same success message
+      return NextResponse.json({ success: true, message: "If this email is eligible, a verification code has been sent." });
     }
 
     // Cleanup old OTPs periodically
-    cleanupExpiredOTPs();
+    await cleanupExpiredOTPs();
 
     // Generate and store OTP
     const code = generateOTP();
-    storeOTP(normalizedEmail, code, type);
+    await storeOTP(normalizedEmail, code, type);
 
     // Send email
     const result = await sendOTPEmail(normalizedEmail, code, type);
@@ -42,7 +46,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Failed to send verification code. Please try again." }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, message: "Verification code sent to your email." });
+    return NextResponse.json({ success: true, message: "If this email is eligible, a verification code has been sent." });
   } catch (error) {
     console.error("Send OTP error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

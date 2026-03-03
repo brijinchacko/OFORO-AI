@@ -1,6 +1,5 @@
 'use client';
 
-import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft, BookOpen } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
@@ -43,12 +42,6 @@ const gettingStartedContent = {
         'Check out the API Reference for detailed information about all available endpoints and parameters. For code examples and use cases, visit our Examples section.',
     },
   ],
-};
-
-export const metadata: Metadata = {
-  title: "Documentation — Oforo AI Platform Guide",
-  description: "Comprehensive documentation for Oforo AI platform. Learn how to use our APIs, SDKs, and explore code examples.",
-  keywords: ["AI documentation", "Oforo docs", "AI API docs"],
 };
 
 export default function DocsPage() {

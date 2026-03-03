@@ -1,5 +1,5 @@
 import { randomInt } from "crypto";
-import { getDb } from "./db";
+import { otpOps } from "./db";
 
 const OTP_EXPIRY_MINUTES = 10;
 
@@ -13,33 +13,33 @@ export function generateOTP(): string {
 /**
  * Store an OTP code in the database
  */
-export function storeOTP(email: string, code: string, type: "signup" | "login"): void {
-  const db = getDb();
-  const now = new Date().toISOString();
+export async function storeOTP(email: string, code: string, type: "signup" | "login"): Promise<void> {
   const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000).toISOString();
 
   // Invalidate previous unused OTPs for this email+type
-  db.prepare("UPDATE otp_codes SET used = 1 WHERE email = ? AND type = ? AND used = 0").run(email, type);
+  await otpOps.invalidatePrevious(email, type);
 
-  db.prepare(
-    "INSERT INTO otp_codes (email, code, type, expires_at, created_at) VALUES (?, ?, ?, ?, ?)"
-  ).run(email, code, type, expiresAt, now);
+  await otpOps.create({
+    email,
+    code,
+    type,
+    expires_at: expiresAt,
+  });
 }
 
 /**
  * Verify an OTP code — returns true if valid, marks as used
  */
-export function verifyOTP(email: string, code: string, type: "signup" | "login"): boolean {
-  const db = getDb();
-  const now = new Date().toISOString();
+export async function verifyOTP(email: string, code: string, type: "signup" | "login"): Promise<boolean> {
+  const now = new Date();
 
-  const otp = db.prepare(
-    "SELECT * FROM otp_codes WHERE email = ? AND code = ? AND type = ? AND used = 0 AND expires_at > ? ORDER BY created_at DESC LIMIT 1"
-  ).get(email, code, type, now) as { id: number } | undefined;
+  const otp = await otpOps.getByEmailAndCode(email, code);
 
   if (!otp) return false;
+  if (otp.type !== type) return false;
+  if (otp.expiresAt < now) return false;
 
-  db.prepare("UPDATE otp_codes SET used = 1 WHERE id = ?").run(otp.id);
+  await otpOps.markUsed(otp.id);
   return true;
 }
 
@@ -102,7 +102,6 @@ export async function sendOTPEmail(email: string, code: string, type: "signup" |
 /**
  * Cleanup expired OTP records
  */
-export function cleanupExpiredOTPs(): void {
-  const db = getDb();
-  db.prepare("DELETE FROM otp_codes WHERE expires_at < ?").run(new Date().toISOString());
+export async function cleanupExpiredOTPs(): Promise<void> {
+  await otpOps.deleteExpired();
 }

@@ -1,5 +1,3 @@
-"use client";
-
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
@@ -76,6 +74,15 @@ export default function LadxPage() {
 
   return (
     <div className="pt-24">
+      {/* CTA Banner */}
+      <div className="sticky top-16 z-40 w-full py-3 px-4 text-center text-sm font-medium"
+        style={{ background: "linear-gradient(135deg, var(--accent), #8b5cf6)", color: "#fff" }}>
+        Experience the full LADX platform →{" "}
+        <a href="https://ladx.ai/" target="_blank" rel="noopener noreferrer" className="underline font-bold">
+          Visit ladx.ai
+        </a>
+      </div>
+
       {/* Hero */}
       <section className="relative py-20 px-4 overflow-hidden">
         <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[150px]" />
